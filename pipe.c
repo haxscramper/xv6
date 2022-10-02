@@ -25,10 +25,12 @@ int pipealloc(struct file** f0, struct file** f1) {
 
     p   = 0;
     *f0 = *f1 = 0;
-    if ((*f0 = filealloc()) == 0 || (*f1 = filealloc()) == 0)
+    if ((*f0 = filealloc()) == 0 || (*f1 = filealloc()) == 0) {
         goto bad;
-    if ((p = (struct pipe*)kalloc()) == 0)
+    }
+    if ((p = (struct pipe*)kalloc()) == 0) {
         goto bad;
+    }
     p->readopen  = 1;
     p->writeopen = 1;
     p->nwrite    = 0;
@@ -46,12 +48,15 @@ int pipealloc(struct file** f0, struct file** f1) {
 
     // PAGEBREAK: 20
 bad:
-    if (p)
+    if (p) {
         kfree((char*)p);
-    if (*f0)
+    }
+    if (*f0) {
         fileclose(*f0);
-    if (*f1)
+    }
+    if (*f1) {
         fileclose(*f1);
+    }
     return -1;
 }
 
@@ -67,8 +72,9 @@ void pipeclose(struct pipe* p, int writable) {
     if (p->readopen == 0 && p->writeopen == 0) {
         release(&p->lock);
         kfree((char*)p);
-    } else
+    } else {
         release(&p->lock);
+    }
 }
 
 // PAGEBREAK: 40
@@ -104,8 +110,9 @@ int piperead(struct pipe* p, char* addr, int n) {
         sleep(&p->nread, &p->lock); // DOC: piperead-sleep
     }
     for (i = 0; i < n; i++) { // DOC: piperead-copy
-        if (p->nread == p->nwrite)
+        if (p->nread == p->nwrite) {
             break;
+        }
         addr[i] = p->data[p->nread++ % PIPESIZE];
     }
     wakeup(&p->nwrite); // DOC: piperead-wakeup

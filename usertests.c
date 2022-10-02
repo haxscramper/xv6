@@ -297,8 +297,9 @@ void pipe1(void) {
     if (pid == 0) {
         close(fds[0]);
         for (n = 0; n < 5; n++) {
-            for (i = 0; i < 1033; i++)
+            for (i = 0; i < 1033; i++) {
                 buf[i] = seq++;
+            }
             if (write(fds[1], buf, 1033) != 1033) {
                 printf(1, "pipe1 oops 1\n");
                 exit();
@@ -318,8 +319,9 @@ void pipe1(void) {
             }
             total += n;
             cc = cc * 2;
-            if (cc > sizeof(buf))
+            if (cc > sizeof(buf)) {
                 cc = sizeof(buf);
+            }
         }
         if (total != 5 * 1033) {
             printf(1, "pipe1 oops 3 total %d\n", total);
@@ -341,24 +343,30 @@ void preempt(void) {
 
     printf(1, "preempt: ");
     pid1 = fork();
-    if (pid1 == 0)
-        for (;;)
+    if (pid1 == 0) {
+        for (;;) {
             ;
+        }
+    }
 
     pid2 = fork();
-    if (pid2 == 0)
-        for (;;)
+    if (pid2 == 0) {
+        for (;;) {
             ;
+        }
+    }
 
     pipe(pfds);
     pid3 = fork();
     if (pid3 == 0) {
         close(pfds[0]);
-        if (write(pfds[1], "x", 1) != 1)
+        if (write(pfds[1], "x", 1) != 1) {
             printf(1, "preempt write error");
+        }
         close(pfds[1]);
-        for (;;)
+        for (;;) {
             ;
+        }
     }
 
     close(pfds[1]);
@@ -455,10 +463,11 @@ void sharedfd(void) {
             break;
         }
     }
-    if (pid == 0)
+    if (pid == 0) {
         exit();
-    else
+    } else {
         wait();
+    }
     close(fd);
     fd = open("sharedfd", 0);
     if (fd < 0) {
@@ -468,10 +477,12 @@ void sharedfd(void) {
     nc = np = 0;
     while ((n = read(fd, buf, sizeof(buf))) > 0) {
         for (i = 0; i < sizeof(buf); i++) {
-            if (buf[i] == 'c')
+            if (buf[i] == 'c') {
                 nc++;
-            if (buf[i] == 'p')
+            }
+            if (buf[i] == 'p') {
                 np++;
+            }
         }
     }
     close(fd);
@@ -607,8 +618,9 @@ void createdelete(void) {
                 printf(1, "oops createdelete %s did exist\n", name);
                 exit();
             }
-            if (fd >= 0)
+            if (fd >= 0) {
                 close(fd);
+            }
         }
     }
 
@@ -757,18 +769,20 @@ void concreate(void) {
             }
             close(fd);
         }
-        if (pid == 0)
+        if (pid == 0) {
             exit();
-        else
+        } else {
             wait();
+        }
     }
 
     memset(fa, 0, sizeof(fa));
     fd = open(".", 0);
     n  = 0;
     while (read(fd, &de, sizeof(de)) > 0) {
-        if (de.inum == 0)
+        if (de.inum == 0) {
             continue;
+        }
         if (de.name[0] == 'C' && de.name[2] == '\0') {
             i = de.name[1] - '0';
             if (i < 0 || i >= sizeof(fa)) {
@@ -808,10 +822,11 @@ void concreate(void) {
             unlink(file);
             unlink(file);
         }
-        if (pid == 0)
+        if (pid == 0) {
             exit();
-        else
+        } else {
             wait();
+        }
     }
 
     printf(1, "concreate ok\n");
@@ -843,10 +858,11 @@ void linkunlink() {
         }
     }
 
-    if (pid)
+    if (pid) {
         wait();
-    else
+    } else {
         exit();
+    }
 
     printf(1, "linkunlink ok\n");
 }
@@ -1133,8 +1149,9 @@ void bigfile(void) {
             printf(1, "read bigfile failed\n");
             exit();
         }
-        if (cc == 0)
+        if (cc == 0) {
             break;
+        }
         if (cc != 300) {
             printf(1, "short read bigfile\n");
             exit();
@@ -1308,11 +1325,13 @@ void iref(void) {
         mkdir("");
         link("README", "");
         fd = open("", O_CREATE);
-        if (fd >= 0)
+        if (fd >= 0) {
             close(fd);
+        }
         fd = open("xx", O_CREATE);
-        if (fd >= 0)
+        if (fd >= 0) {
             close(fd);
+        }
         unlink("xx");
     }
 
@@ -1330,10 +1349,12 @@ void forktest(void) {
 
     for (n = 0; n < 1000; n++) {
         pid = fork();
-        if (pid < 0)
+        if (pid < 0) {
             break;
-        if (pid == 0)
+        }
+        if (pid == 0) {
             exit();
+        }
     }
 
     if (n == 1000) {
@@ -1387,8 +1408,9 @@ void sbrktest(void) {
         printf(stdout, "sbrk test failed post-fork\n");
         exit();
     }
-    if (pid == 0)
+    if (pid == 0) {
         exit();
+    }
     wait();
 
     // can one grow address space to something big?
@@ -1464,18 +1486,21 @@ void sbrktest(void) {
             sbrk(BIG - (uint)sbrk(0));
             write(fds[1], "x", 1);
             // sit around until killed
-            for (;;)
+            for (;;) {
                 sleep(1000);
+            }
         }
-        if (pids[i] != -1)
+        if (pids[i] != -1) {
             read(fds[0], &scratch, 1);
+        }
     }
     // if those failed allocations freed up the pages they did allocate,
     // we'll be able to allocate here
     c = sbrk(4096);
     for (i = 0; i < sizeof(pids) / sizeof(pids[0]); i++) {
-        if (pids[i] == -1)
+        if (pids[i] == -1) {
             continue;
+        }
         kill(pids[i]);
         wait();
     }
@@ -1484,8 +1509,9 @@ void sbrktest(void) {
         exit();
     }
 
-    if (sbrk(0) > oldbrk)
+    if (sbrk(0) > oldbrk) {
         sbrk(-(sbrk(0) - oldbrk));
+    }
 
     printf(stdout, "sbrk test OK\n");
 }
@@ -1555,10 +1581,11 @@ void bigargtest(void) {
     if (pid == 0) {
         static char* args[MAXARG];
         int          i;
-        for (i = 0; i < MAXARG - 1; i++)
+        for (i = 0; i < MAXARG - 1; i++) {
             args[i]
                 = "bigargs test: failed\n                                                                                                                      "
                   "                                                                                 ";
+        }
         args[MAXARG - 1] = 0;
         printf(stdout, "bigarg test\n");
         exec("echo", args);
@@ -1605,15 +1632,17 @@ void fsfull() {
         int total = 0;
         while (1) {
             int cc = write(fd, buf, 512);
-            if (cc < 512)
+            if (cc < 512) {
                 break;
+            }
             total += cc;
             fsblocks++;
         }
         printf(1, "wrote %d bytes\n", total);
         close(fd);
-        if (total == 0)
+        if (total == 0) {
             break;
+        }
     }
 
     while (nfiles >= 0) {

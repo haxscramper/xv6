@@ -38,10 +38,12 @@ static void idestart(struct buf*);
 static int idewait(int checkerr) {
     int r;
 
-    while (((r = inb(0x1f7)) & (IDE_BSY | IDE_DRDY)) != IDE_DRDY)
+    while (((r = inb(0x1f7)) & (IDE_BSY | IDE_DRDY)) != IDE_DRDY) {
         ;
-    if (checkerr && (r & (IDE_DF | IDE_ERR)) != 0)
+    }
+    if (checkerr && (r & (IDE_DF | IDE_ERR)) != 0) {
         return -1;
+    }
     return 0;
 }
 
@@ -67,17 +69,20 @@ void ideinit(void) {
 
 // Start the request for b.  Caller must hold idelock.
 static void idestart(struct buf* b) {
-    if (b == 0)
+    if (b == 0) {
         panic("idestart");
-    if (b->blockno >= FSSIZE)
+    }
+    if (b->blockno >= FSSIZE) {
         panic("incorrect blockno");
+    }
     int sector_per_block = BSIZE / SECTOR_SIZE;
     int sector           = b->blockno * sector_per_block;
     int read_cmd         = (sector_per_block == 1) ? IDE_CMD_READ : IDE_CMD_RDMUL;
     int write_cmd        = (sector_per_block == 1) ? IDE_CMD_WRITE : IDE_CMD_WRMUL;
 
-    if (sector_per_block > 7)
+    if (sector_per_block > 7) {
         panic("idestart");
+    }
 
     idewait(0);
     outb(0x3f6, 0);                // generate interrupt
@@ -108,8 +113,9 @@ void ideintr(void) {
     idequeue = b->qnext;
 
     // Read data if needed.
-    if (!(b->flags & B_DIRTY) && idewait(1) >= 0)
+    if (!(b->flags & B_DIRTY) && idewait(1) >= 0) {
         insl(0x1f0, b->data, BSIZE / 4);
+    }
 
     // Wake process waiting for this buf.
     b->flags |= B_VALID;
@@ -117,8 +123,9 @@ void ideintr(void) {
     wakeup(b);
 
     // Start disk on next buf in queue.
-    if (idequeue != 0)
+    if (idequeue != 0) {
         idestart(idequeue);
+    }
 
     release(&idelock);
 }
@@ -130,24 +137,29 @@ void ideintr(void) {
 void iderw(struct buf* b) {
     struct buf** pp;
 
-    if (!holdingsleep(&b->lock))
+    if (!holdingsleep(&b->lock)) {
         panic("iderw: buf not locked");
-    if ((b->flags & (B_VALID | B_DIRTY)) == B_VALID)
+    }
+    if ((b->flags & (B_VALID | B_DIRTY)) == B_VALID) {
         panic("iderw: nothing to do");
-    if (b->dev != 0 && !havedisk1)
+    }
+    if (b->dev != 0 && !havedisk1) {
         panic("iderw: ide disk 1 not present");
+    }
 
     acquire(&idelock); // DOC:acquire-lock
 
     // Append b to idequeue.
     b->qnext = 0;
-    for (pp = &idequeue; *pp; pp = &(*pp)->qnext) // DOC:insert-queue
+    for (pp = &idequeue; *pp; pp = &(*pp)->qnext) { // DOC:insert-queue
         ;
+    }
     *pp = b;
 
     // Start disk if necessary.
-    if (idequeue == b)
+    if (idequeue == b) {
         idestart(b);
+    }
 
     // Wait for request to finish.
     while ((b->flags & (B_VALID | B_DIRTY)) != B_VALID) {

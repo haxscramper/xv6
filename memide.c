@@ -34,21 +34,26 @@ void ideintr(void) {
 void iderw(struct buf* b) {
     uchar* p;
 
-    if (!holdingsleep(&b->lock))
+    if (!holdingsleep(&b->lock)) {
         panic("iderw: buf not locked");
-    if ((b->flags & (B_VALID | B_DIRTY)) == B_VALID)
+    }
+    if ((b->flags & (B_VALID | B_DIRTY)) == B_VALID) {
         panic("iderw: nothing to do");
-    if (b->dev != 1)
+    }
+    if (b->dev != 1) {
         panic("iderw: request not for disk 1");
-    if (b->blockno >= disksize)
+    }
+    if (b->blockno >= disksize) {
         panic("iderw: block out of range");
+    }
 
     p = memdisk + b->blockno * BSIZE;
 
     if (b->flags & B_DIRTY) {
         b->flags &= ~B_DIRTY;
         memmove(p, b->data, BSIZE);
-    } else
+    } else {
         memmove(b->data, p, BSIZE);
+    }
     b->flags |= B_VALID;
 }

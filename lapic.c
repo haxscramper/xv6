@@ -50,8 +50,9 @@ static void lapicw(int index, int value) {
 }
 
 void lapicinit(void) {
-    if (!lapic)
+    if (!lapic) {
         return;
+    }
 
     // Enable local APIC; set spurious interrupt vector.
     lapicw(SVR, ENABLE | (T_IRQ0 + IRQ_SPURIOUS));
@@ -70,8 +71,9 @@ void lapicinit(void) {
 
     // Disable performance counter overflow interrupts
     // on machines that provide that interrupt entry.
-    if (((lapic[VER] >> 16) & 0xFF) >= 4)
+    if (((lapic[VER] >> 16) & 0xFF) >= 4) {
         lapicw(PCINT, MASKED);
+    }
 
     // Map error interrupt to IRQ_ERROR.
     lapicw(ERROR, T_IRQ0 + IRQ_ERROR);
@@ -86,23 +88,26 @@ void lapicinit(void) {
     // Send an Init Level De-Assert to synchronise arbitration ID's.
     lapicw(ICRHI, 0);
     lapicw(ICRLO, BCAST | INIT | LEVEL);
-    while (lapic[ICRLO] & DELIVS)
+    while (lapic[ICRLO] & DELIVS) {
         ;
+    }
 
     // Enable interrupts on the APIC (but not on the processor).
     lapicw(TPR, 0);
 }
 
 int lapicid(void) {
-    if (!lapic)
+    if (!lapic) {
         return 0;
+    }
     return lapic[ID] >> 24;
 }
 
 // Acknowledge interrupt.
 void lapiceoi(void) {
-    if (lapic)
+    if (lapic) {
         lapicw(EOI, 0);
+    }
 }
 
 // Spin for a given number of microseconds.
@@ -186,11 +191,13 @@ void cmostime(struct rtcdate* r) {
     // make sure CMOS doesn't modify time while we read it
     for (;;) {
         fill_rtcdate(&t1);
-        if (cmos_read(CMOS_STATA) & CMOS_UIP)
+        if (cmos_read(CMOS_STATA) & CMOS_UIP) {
             continue;
+        }
         fill_rtcdate(&t2);
-        if (memcmp(&t1, &t2, sizeof(t1)) == 0)
+        if (memcmp(&t1, &t2, sizeof(t1)) == 0) {
             break;
+        }
     }
 
     // convert

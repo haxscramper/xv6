@@ -31,21 +31,24 @@ static void printint(int xx, int base, int sign) {
     int         i;
     uint        x;
 
-    if (sign && (sign = xx < 0))
+    if (sign && (sign = xx < 0)) {
         x = -xx;
-    else
+    } else {
         x = xx;
+    }
 
     i = 0;
     do {
         buf[i++] = digits[x % base];
     } while ((x /= base) != 0);
 
-    if (sign)
+    if (sign) {
         buf[i++] = '-';
+    }
 
-    while (--i >= 0)
+    while (--i >= 0) {
         consputc(buf[i]);
+    }
 }
 // PAGEBREAK: 50
 
@@ -56,11 +59,13 @@ void cprintf(char* fmt, ...) {
     char* s;
 
     locking = cons.locking;
-    if (locking)
+    if (locking) {
         acquire(&cons.lock);
+    }
 
-    if (fmt == 0)
+    if (fmt == 0) {
         panic("null fmt");
+    }
 
     argp = (uint*)(void*)(&fmt + 1);
     for (i = 0; (c = fmt[i] & 0xff) != 0; i++) {
@@ -69,17 +74,20 @@ void cprintf(char* fmt, ...) {
             continue;
         }
         c = fmt[++i] & 0xff;
-        if (c == 0)
+        if (c == 0) {
             break;
+        }
         switch (c) {
             case 'd': printint(*argp++, 10, 1); break;
             case 'x':
             case 'p': printint(*argp++, 16, 0); break;
             case 's':
-                if ((s = (char*)*argp++) == 0)
+                if ((s = (char*)*argp++) == 0) {
                     s = "(null)";
-                for (; *s; s++)
+                }
+                for (; *s; s++) {
                     consputc(*s);
+                }
                 break;
             case '%': consputc('%'); break;
             default:
@@ -90,8 +98,9 @@ void cprintf(char* fmt, ...) {
         }
     }
 
-    if (locking)
+    if (locking) {
         release(&cons.lock);
+    }
 }
 
 void panic(char* s) {
@@ -105,11 +114,13 @@ void panic(char* s) {
     cprintf(s);
     cprintf("\n");
     getcallerpcs(&s, pcs);
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 10; i++) {
         cprintf(" %p", pcs[i]);
+    }
     panicked = 1; // freeze other CPU
-    for (;;)
+    for (;;) {
         ;
+    }
 }
 
 // PAGEBREAK: 50
@@ -126,16 +137,19 @@ static void cgaputc(int c) {
     outb(CRTPORT, 15);
     pos |= inb(CRTPORT + 1);
 
-    if (c == '\n')
+    if (c == '\n') {
         pos += 80 - pos % 80;
-    else if (c == BACKSPACE) {
-        if (pos > 0)
+    } else if (c == BACKSPACE) {
+        if (pos > 0) {
             --pos;
-    } else
+        }
+    } else {
         crt[pos++] = (c & 0xff) | 0x0700; // black on white
+    }
 
-    if (pos < 0 || pos > 25 * 80)
+    if (pos < 0 || pos > 25 * 80) {
         panic("pos under/overflow");
+    }
 
     if ((pos / 80) >= 24) { // Scroll up.
         memmove(crt, crt + 80, sizeof(crt[0]) * 23 * 80);
@@ -153,16 +167,18 @@ static void cgaputc(int c) {
 void consputc(int c) {
     if (panicked) {
         cli();
-        for (;;)
+        for (;;) {
             ;
+        }
     }
 
     if (c == BACKSPACE) {
         uartputc('\b');
         uartputc(' ');
         uartputc('\b');
-    } else
+    } else {
         uartputc(c);
+    }
     cgaputc(c);
 }
 
@@ -246,8 +262,9 @@ int consoleread(struct inode* ip, char* dst, int n) {
         }
         *dst++ = c;
         --n;
-        if (c == '\n')
+        if (c == '\n') {
             break;
+        }
     }
     release(&cons.lock);
     ilock(ip);
@@ -260,8 +277,9 @@ int consolewrite(struct inode* ip, char* buf, int n) {
 
     iunlock(ip);
     acquire(&cons.lock);
-    for (i = 0; i < n; i++)
+    for (i = 0; i < n; i++) {
         consputc(buf[i] & 0xff);
+    }
     release(&cons.lock);
     ilock(ip);
 

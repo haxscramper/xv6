@@ -8,13 +8,15 @@ char* fmtname(char* path) {
     char*       p;
 
     // Find first character after last slash.
-    for (p = path + strlen(path); p >= path && *p != '/'; p--)
+    for (p = path + strlen(path); p >= path && *p != '/'; p--) {
         ;
+    }
     p++;
 
     // Return blank-padded name.
-    if (strlen(p) >= DIRSIZ)
+    if (strlen(p) >= DIRSIZ) {
         return p;
+    }
     memmove(buf, p, strlen(p));
     memset(buf + strlen(p), ' ', DIRSIZ - strlen(p));
     return buf;
@@ -49,8 +51,9 @@ void ls(char* path) {
             p    = buf + strlen(buf);
             *p++ = '/';
             while (read(fd, &de, sizeof(de)) == sizeof(de)) {
-                if (de.inum == 0)
+                if (de.inum == 0) {
                     continue;
+                }
                 memmove(p, de.name, DIRSIZ);
                 p[DIRSIZ] = 0;
                 if (stat(buf, &st) < 0) {
@@ -71,7 +74,8 @@ int main(int argc, char* argv[]) {
         ls(".");
         exit();
     }
-    for (i = 1; i < argc; i++)
+    for (i = 1; i < argc; i++) {
         ls(argv[i]);
+    }
     exit();
 }

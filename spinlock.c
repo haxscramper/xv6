@@ -21,12 +21,14 @@ void initlock(struct spinlock* lk, char* name) {
 // other CPUs to waste time spinning to acquire it.
 void acquire(struct spinlock* lk) {
     pushcli(); // disable interrupts to avoid deadlock.
-    if (holding(lk))
+    if (holding(lk)) {
         panic("acquire");
+    }
 
     // The xchg is atomic.
-    while (xchg(&lk->locked, 1) != 0)
+    while (xchg(&lk->locked, 1) != 0) {
         ;
+    }
 
     // Tell the C compiler and the processor to not move loads or stores
     // past this point, to ensure that the critical section's memory
@@ -40,8 +42,9 @@ void acquire(struct spinlock* lk) {
 
 // Release the lock.
 void release(struct spinlock* lk) {
-    if (!holding(lk))
+    if (!holding(lk)) {
         panic("release");
+    }
 
     lk->pcs[0] = 0;
     lk->cpu    = 0;
@@ -68,13 +71,15 @@ void getcallerpcs(void* v, uint pcs[]) {
 
     ebp = (uint*)v - 2;
     for (i = 0; i < 10; i++) {
-        if (ebp == 0 || ebp < (uint*)KERNBASE || ebp == (uint*)0xffffffff)
+        if (ebp == 0 || ebp < (uint*)KERNBASE || ebp == (uint*)0xffffffff) {
             break;
+        }
         pcs[i] = ebp[1];        // saved %eip
         ebp    = (uint*)ebp[0]; // saved %ebp
     }
-    for (; i < 10; i++)
+    for (; i < 10; i++) {
         pcs[i] = 0;
+    }
 }
 
 // Check whether this cpu is holding the lock.
@@ -96,16 +101,20 @@ void pushcli(void) {
 
     eflags = readeflags();
     cli();
-    if (mycpu()->ncli == 0)
+    if (mycpu()->ncli == 0) {
         mycpu()->intena = eflags & FL_IF;
+    }
     mycpu()->ncli += 1;
 }
 
 void popcli(void) {
-    if (readeflags() & FL_IF)
+    if (readeflags() & FL_IF) {
         panic("popcli - interruptible");
-    if (--mycpu()->ncli < 0)
+    }
+    if (--mycpu()->ncli < 0) {
         panic("popcli");
-    if (mycpu()->ncli == 0 && mycpu()->intena)
+    }
+    if (mycpu()->ncli == 0 && mycpu()->intena) {
         sti();
+    }
 }

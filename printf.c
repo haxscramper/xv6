@@ -22,11 +22,13 @@ static void printint(int fd, int xx, int base, int sgn) {
     do {
         buf[i++] = digits[x % base];
     } while ((x /= base) != 0);
-    if (neg)
+    if (neg) {
         buf[i++] = '-';
+    }
 
-    while (--i >= 0)
+    while (--i >= 0) {
         putc(fd, buf[i]);
+    }
 }
 
 // Print to the given fd. Only understands %d, %x, %p, %s.
@@ -55,8 +57,9 @@ void printf(int fd, const char* fmt, ...) {
             } else if (c == 's') {
                 s = (char*)*ap;
                 ap++;
-                if (s == 0)
+                if (s == 0) {
                     s = "(null)";
+                }
                 while (*s != 0) {
                     putc(fd, *s);
                     s++;

@@ -103,8 +103,9 @@ struct buf* bread(uint dev, uint blockno)
 
 // Write b's contents to disk.  Must be locked.
 void bwrite(struct buf* b) {
-    if (!holdingsleep(&b->lock))
+    if (!holdingsleep(&b->lock)) {
         panic("bwrite");
+    }
     b->flags |= B_DIRTY;
     iderw(b);
 }
@@ -112,8 +113,9 @@ void bwrite(struct buf* b) {
 // Release a locked buffer.
 // Move to the head of the MRU list.
 void brelse(struct buf* b) {
-    if (!holdingsleep(&b->lock))
+    if (!holdingsleep(&b->lock)) {
         panic("brelse");
+    }
 
     releasesleep(&b->lock);
 

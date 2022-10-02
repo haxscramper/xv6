@@ -29,12 +29,14 @@ void idtinit(void) { lidt(idt, sizeof(idt)); }
 // PAGEBREAK: 41
 void trap(struct trapframe* tf) {
     if (tf->trapno == T_SYSCALL) {
-        if (myproc()->killed)
+        if (myproc()->killed) {
             exit();
+        }
         myproc()->tf = tf;
         syscall();
-        if (myproc()->killed)
+        if (myproc()->killed) {
             exit();
+        }
         return;
     }
 
@@ -93,15 +95,18 @@ void trap(struct trapframe* tf) {
     // Force process exit if it has been killed and is in user space.
     // (If it is still executing in the kernel, let it keep running
     // until it gets to the regular system call return.)
-    if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER)
+    if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER) {
         exit();
+    }
 
     // Force process to give up CPU on clock tick.
     // If interrupts were on while locks held, would need to check nlock.
-    if (myproc() && myproc()->state == RUNNING && tf->trapno == T_IRQ0 + IRQ_TIMER)
+    if (myproc() && myproc()->state == RUNNING && tf->trapno == T_IRQ0 + IRQ_TIMER) {
         yield();
+    }
 
     // Check if the process has been killed since we yielded
-    if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER)
+    if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER) {
         exit();
+    }
 }

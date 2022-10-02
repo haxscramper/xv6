@@ -9,8 +9,9 @@ int kbdgetc(void) {
     uint          st, data, c;
 
     st = inb(KBSTATP);
-    if ((st & KBS_DIB) == 0)
+    if ((st & KBS_DIB) == 0) {
         return -1;
+    }
     data = inb(KBDATAP);
 
     if (data == 0xE0) {
@@ -31,10 +32,11 @@ int kbdgetc(void) {
     shift ^= togglecode[data];
     c = charcode[shift & (CTL | SHIFT)][data];
     if (shift & CAPSLOCK) {
-        if ('a' <= c && c <= 'z')
+        if ('a' <= c && c <= 'z') {
             c += 'A' - 'a';
-        else if ('A' <= c && c <= 'Z')
+        } else if ('A' <= c && c <= 'Z') {
             c += 'a' - 'A';
+        }
     }
     return c;
 }

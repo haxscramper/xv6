@@ -40,8 +40,9 @@ struct file* filealloc(void)
 struct file* filedup(struct file* f)
 {
     acquire(&ftable.lock);
-    if (f->ref < 1)
+    if (f->ref < 1) {
         panic("filedup");
+    }
     f->ref++;
     release(&ftable.lock);
     return f;
@@ -52,8 +53,9 @@ void fileclose(struct file* f) {
     struct file ff;
 
     acquire(&ftable.lock);
-    if (f->ref < 1)
+    if (f->ref < 1) {
         panic("fileclose");
+    }
     if (--f->ref > 0) {
         release(&ftable.lock);
         return;
@@ -63,9 +65,9 @@ void fileclose(struct file* f) {
     f->type = FD_NONE;
     release(&ftable.lock);
 
-    if (ff.type == FD_PIPE)
+    if (ff.type == FD_PIPE) {
         pipeclose(ff.pipe, ff.writable);
-    else if (ff.type == FD_INODE) {
+    } else if (ff.type == FD_INODE) {
         begin_op();
         iput(ff.ip);
         end_op();
@@ -87,14 +89,17 @@ int filestat(struct file* f, struct stat* st) {
 int fileread(struct file* f, char* addr, int n) {
     int r;
 
-    if (f->readable == 0)
+    if (f->readable == 0) {
         return -1;
-    if (f->type == FD_PIPE)
+    }
+    if (f->type == FD_PIPE) {
         return piperead(f->pipe, addr, n);
+    }
     if (f->type == FD_INODE) {
         ilock(f->ip);
-        if ((r = readi(f->ip, addr, f->off, n)) > 0)
+        if ((r = readi(f->ip, addr, f->off, n)) > 0) {
             f->off += r;
+        }
         iunlock(f->ip);
         return r;
     }
@@ -106,10 +111,12 @@ int fileread(struct file* f, char* addr, int n) {
 int filewrite(struct file* f, char* addr, int n) {
     int r;
 
-    if (f->writable == 0)
+    if (f->writable == 0) {
         return -1;
-    if (f->type == FD_PIPE)
+    }
+    if (f->type == FD_PIPE) {
         return pipewrite(f->pipe, addr, n);
+    }
     if (f->type == FD_INODE) {
         // write a few blocks at a time to avoid exceeding
         // the maximum log transaction size, including
@@ -121,20 +128,24 @@ int filewrite(struct file* f, char* addr, int n) {
         int i   = 0;
         while (i < n) {
             int n1 = n - i;
-            if (n1 > max)
+            if (n1 > max) {
                 n1 = max;
+            }
 
             begin_op();
             ilock(f->ip);
-            if ((r = writei(f->ip, addr + i, f->off, n1)) > 0)
+            if ((r = writei(f->ip, addr + i, f->off, n1)) > 0) {
                 f->off += r;
+            }
             iunlock(f->ip);
             end_op();
 
-            if (r < 0)
+            if (r < 0) {
                 break;
-            if (r != n1)
+            }
+            if (r != n1) {
                 panic("short filewrite");
+            }
             i += r;
         }
         return i == n ? n : -1;

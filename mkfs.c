@@ -105,8 +105,9 @@ int main(int argc, char* argv[]) {
 
     freeblock = nmeta; // the first free block that we can allocate
 
-    for (i = 0; i < FSSIZE; i++)
+    for (i = 0; i < FSSIZE; i++) {
         wsect(i, zeroes);
+    }
 
     memset(buf, 0, sizeof(buf));
     memmove(buf, &sb, sizeof(sb));
@@ -137,8 +138,9 @@ int main(int argc, char* argv[]) {
         // The binaries are named _rm, _cat, etc. to keep the
         // build operating system from trying to execute them
         // in place of system binaries like rm and cat.
-        if (argv[i][0] == '_')
+        if (argv[i][0] == '_') {
             ++argv[i];
+        }
 
         inum = ialloc(T_FILE);
 
@@ -147,8 +149,9 @@ int main(int argc, char* argv[]) {
         strncpy(de.name, argv[i], DIRSIZ);
         iappend(rootino, &de, sizeof(de));
 
-        while ((cc = read(fd, buf, sizeof(buf))) > 0)
+        while ((cc = read(fd, buf, sizeof(buf))) > 0) {
             iappend(inum, buf, cc);
+        }
 
         close(fd);
     }

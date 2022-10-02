@@ -79,8 +79,9 @@ static void bfree(int dev, uint b) {
     bp = bread(dev, BBLOCK(b, sb));
     bi = b % BPB;
     m  = 1 << (bi % 8);
-    if ((bp->data[bi / 8] & m) == 0)
+    if ((bp->data[bi / 8] & m) == 0) {
         panic("freeing free block");
+    }
     bp->data[bi / 8] &= ~m;
     log_write(bp);
     brelse(bp);
@@ -245,13 +246,15 @@ static struct inode* iget(uint dev, uint inum) {
             release(&icache.lock);
             return ip;
         }
-        if (empty == 0 && ip->ref == 0) // Remember empty slot.
+        if (empty == 0 && ip->ref == 0) { // Remember empty slot.
             empty = ip;
+        }
     }
 
     // Recycle an inode cache entry.
-    if (empty == 0)
+    if (empty == 0) {
         panic("iget: no inodes");
+    }
 
     ip        = empty;
     ip->dev   = dev;
@@ -279,8 +282,9 @@ void ilock(struct inode* ip) {
     struct buf*    bp;
     struct dinode* dip;
 
-    if (ip == 0 || ip->ref < 1)
+    if (ip == 0 || ip->ref < 1) {
         panic("ilock");
+    }
 
     acquiresleep(&ip->lock);
 
@@ -295,15 +299,17 @@ void ilock(struct inode* ip) {
         memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
         brelse(bp);
         ip->valid = 1;
-        if (ip->type == 0)
+        if (ip->type == 0) {
             panic("ilock: no type");
+        }
     }
 }
 
 // Unlock the given inode.
 void iunlock(struct inode* ip) {
-    if (ip == 0 || !holdingsleep(&ip->lock) || ip->ref < 1)
+    if (ip == 0 || !holdingsleep(&ip->lock) || ip->ref < 1) {
         panic("iunlock");
+    }
 
     releasesleep(&ip->lock);
 }
@@ -357,16 +363,18 @@ static uint bmap(struct inode* ip, uint bn) {
     struct buf* bp;
 
     if (bn < NDIRECT) {
-        if ((addr = ip->addrs[bn]) == 0)
+        if ((addr = ip->addrs[bn]) == 0) {
             ip->addrs[bn] = addr = balloc(ip->dev);
+        }
         return addr;
     }
     bn -= NDIRECT;
 
     if (bn < NINDIRECT) {
         // Load indirect block, allocating if necessary.
-        if ((addr = ip->addrs[NDIRECT]) == 0)
+        if ((addr = ip->addrs[NDIRECT]) == 0) {
             ip->addrs[NDIRECT] = addr = balloc(ip->dev);
+        }
         bp = bread(ip->dev, addr);
         a  = (uint*)bp->data;
         if ((addr = a[bn]) == 0) {
@@ -401,8 +409,9 @@ static void itrunc(struct inode* ip) {
         bp = bread(ip->dev, ip->addrs[NDIRECT]);
         a  = (uint*)bp->data;
         for (j = 0; j < NINDIRECT; j++) {
-            if (a[j])
+            if (a[j]) {
                 bfree(ip->dev, a[j]);
+            }
         }
         brelse(bp);
         bfree(ip->dev, ip->addrs[NDIRECT]);
@@ -431,15 +440,18 @@ int readi(struct inode* ip, char* dst, uint off, uint n) {
     struct buf* bp;
 
     if (ip->type == T_DEV) {
-        if (ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read)
+        if (ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read) {
             return -1;
+        }
         return devsw[ip->major].read(ip, dst, n);
     }
 
-    if (off > ip->size || off + n < off)
+    if (off > ip->size || off + n < off) {
         return -1;
-    if (off + n > ip->size)
+    }
+    if (off + n > ip->size) {
         n = ip->size - off;
+    }
 
     for (tot = 0; tot < n; tot += m, off += m, dst += m) {
         bp = bread(ip->dev, bmap(ip, off / BSIZE));
@@ -458,15 +470,18 @@ int writei(struct inode* ip, char* src, uint off, uint n) {
     struct buf* bp;
 
     if (ip->type == T_DEV) {
-        if (ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].write)
+        if (ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].write) {
             return -1;
+        }
         return devsw[ip->major].write(ip, src, n);
     }
 
-    if (off > ip->size || off + n < off)
+    if (off > ip->size || off + n < off) {
         return -1;
-    if (off + n > MAXFILE * BSIZE)
+    }
+    if (off + n > MAXFILE * BSIZE) {
         return -1;
+    }
 
     for (tot = 0; tot < n; tot += m, off += m, src += m) {
         bp = bread(ip->dev, bmap(ip, off / BSIZE));
@@ -495,18 +510,22 @@ struct inode* dirlookup(struct inode* dp, char* name, uint* poff)
     uint          off, inum;
     struct dirent de;
 
-    if (dp->type != T_DIR)
+    if (dp->type != T_DIR) {
         panic("dirlookup not DIR");
+    }
 
     for (off = 0; off < dp->size; off += sizeof(de)) {
-        if (readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
+        if (readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de)) {
             panic("dirlookup read");
-        if (de.inum == 0)
+        }
+        if (de.inum == 0) {
             continue;
+        }
         if (namecmp(name, de.name) == 0) {
             // entry matches path element
-            if (poff)
+            if (poff) {
                 *poff = off;
+            }
             inum = de.inum;
             return iget(dp->dev, inum);
         }
@@ -529,16 +548,19 @@ int dirlink(struct inode* dp, char* name, uint inum) {
 
     // Look for an empty dirent.
     for (off = 0; off < dp->size; off += sizeof(de)) {
-        if (readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
+        if (readi(dp, (char*)&de, off, sizeof(de)) != sizeof(de)) {
             panic("dirlink read");
-        if (de.inum == 0)
+        }
+        if (de.inum == 0) {
             break;
+        }
     }
 
     strncpy(de.name, name, DIRSIZ);
     de.inum = inum;
-    if (writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
+    if (writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de)) {
         panic("dirlink");
+    }
 
     return 0;
 }
@@ -562,22 +584,26 @@ static char* skipelem(char* path, char* name) {
     char* s;
     int   len;
 
-    while (*path == '/')
+    while (*path == '/') {
         path++;
-    if (*path == 0)
+    }
+    if (*path == 0) {
         return 0;
+    }
     s = path;
-    while (*path != '/' && *path != 0)
+    while (*path != '/' && *path != 0) {
         path++;
+    }
     len = path - s;
-    if (len >= DIRSIZ)
+    if (len >= DIRSIZ) {
         memmove(name, s, DIRSIZ);
-    else {
+    } else {
         memmove(name, s, len);
         name[len] = 0;
     }
-    while (*path == '/')
+    while (*path == '/') {
         path++;
+    }
     return path;
 }
 
@@ -588,10 +614,11 @@ static char* skipelem(char* path, char* name) {
 static struct inode* namex(char* path, int nameiparent, char* name) {
     struct inode *ip, *next;
 
-    if (*path == '/')
+    if (*path == '/') {
         ip = iget(ROOTDEV, ROOTINO);
-    else
+    } else {
         ip = idup(myproc()->cwd);
+    }
 
     while ((path = skipelem(path, name)) != 0) {
         ilock(ip);
