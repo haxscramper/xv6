@@ -1,7 +1,7 @@
-#include "types.h"
-#include "stat.h"
-#include "user.h"
-#include "fs.h"
+#include "types.hpp"
+#include "stat.hpp"
+#include "user.hpp"
+#include "fs.hpp"
 
 char* fmtname(char* path) {
     static char buf[DIRSIZ + 1];
@@ -40,9 +40,18 @@ void ls(char* path) {
     }
 
     switch (st.type) {
-        case T_FILE: printf(1, "%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size); break;
+        case T_FILE: {
+            printf(
+                1,
+                "%s %d %d %d\n",
+                fmtname(path),
+                st.type,
+                st.ino,
+                st.size);
+            break;
+        }
 
-        case T_DIR:
+        case T_DIR: {
             if (strlen(path) + 1 + DIRSIZ + 1 > sizeof buf) {
                 printf(1, "ls: path too long\n");
                 break;
@@ -60,9 +69,16 @@ void ls(char* path) {
                     printf(1, "ls: cannot stat %s\n", buf);
                     continue;
                 }
-                printf(1, "%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+                printf(
+                    1,
+                    "%s %d %d %d\n",
+                    fmtname(buf),
+                    st.type,
+                    st.ino,
+                    st.size);
             }
             break;
+        }
     }
     close(fd);
 }
