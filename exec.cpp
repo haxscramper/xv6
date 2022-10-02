@@ -1,11 +1,11 @@
-#include "types.h"
-#include "param.h"
-#include "memlayout.h"
-#include "mmu.h"
-#include "proc.h"
-#include "defs.h"
-#include "x86.h"
-#include "elf.h"
+#include "types.hpp"
+#include "param.hpp"
+#include "memlayout.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
+#include "defs.hpp"
+#include "x86.hpp"
+#include "elf.hpp"
 
 int exec(char* path, char** argv) {
     char *         s, *last;

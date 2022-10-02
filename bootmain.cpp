@@ -5,16 +5,16 @@
 // bootmain() loads an ELF kernel image from the disk starting at
 // sector 1 and then jumps to the kernel entry routine.
 
-#include "types.h"
-#include "elf.h"
-#include "x86.h"
-#include "memlayout.h"
+#include "types.hpp"
+#include "elf.hpp"
+#include "x86.hpp"
+#include "memlayout.hpp"
 
 #define SECTSIZE 512
 
 void readseg(uchar*, uint, uint);
 
-void bootmain(void) {
+extern "C" void bootmain(void) {
     struct elfhdr*  elf;
     struct proghdr *ph, *eph;
     void (*entry)(void);

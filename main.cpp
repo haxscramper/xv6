@@ -51,7 +51,7 @@ static void mpmain(void) {
     scheduler();                  // start running processes
 }
 
-pde_t entrypgdir[]; // For entry.S
+extern "C" pde_t entrypgdir[]; // For entry.S
 
 // Start the non-boot (AP) processors.
 static void startothers(void) {

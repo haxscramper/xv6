@@ -10,7 +10,7 @@
 #include "spinlock.h"
 #include "sleeplock.h"
 
-void initsleeplock(struct sleeplock* lk, char* name) {
+void initsleeplock(struct sleeplock* lk, const char* name) {
     initlock(&lk->lk, "sleep lock");
     lk->name   = name;
     lk->locked = 0;

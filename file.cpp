@@ -2,13 +2,13 @@
 // File descriptors
 //
 
-#include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "fs.h"
-#include "spinlock.h"
-#include "sleeplock.h"
-#include "file.h"
+#include "types.hpp"
+#include "defs.hpp"
+#include "param.hpp"
+#include "fs.hpp"
+#include "spinlock.hpp"
+#include "sleeplock.hpp"
+#include "file.hpp"
 
 struct devsw devsw[NDEV];
 struct
@@ -62,12 +62,12 @@ void fileclose(struct file* f) {
     }
     ff      = *f;
     f->ref  = 0;
-    f->type = FD_NONE;
+    f->type = file::FD_NONE;
     release(&ftable.lock);
 
-    if (ff.type == FD_PIPE) {
+    if (ff.type == file::FD_PIPE) {
         pipeclose(ff.pipe, ff.writable);
-    } else if (ff.type == FD_INODE) {
+    } else if (ff.type == file::FD_INODE) {
         begin_op();
         iput(ff.ip);
         end_op();
@@ -76,7 +76,7 @@ void fileclose(struct file* f) {
 
 // Get metadata about file f.
 int filestat(struct file* f, struct stat* st) {
-    if (f->type == FD_INODE) {
+    if (f->type == file::FD_INODE) {
         ilock(f->ip);
         stati(f->ip, st);
         iunlock(f->ip);
@@ -92,10 +92,10 @@ int fileread(struct file* f, char* addr, int n) {
     if (f->readable == 0) {
         return -1;
     }
-    if (f->type == FD_PIPE) {
+    if (f->type == file::FD_PIPE) {
         return piperead(f->pipe, addr, n);
     }
-    if (f->type == FD_INODE) {
+    if (f->type == file::FD_INODE) {
         ilock(f->ip);
         if ((r = readi(f->ip, addr, f->off, n)) > 0) {
             f->off += r;
@@ -114,10 +114,10 @@ int filewrite(struct file* f, char* addr, int n) {
     if (f->writable == 0) {
         return -1;
     }
-    if (f->type == FD_PIPE) {
+    if (f->type == file::FD_PIPE) {
         return pipewrite(f->pipe, addr, n);
     }
-    if (f->type == FD_INODE) {
+    if (f->type == file::FD_INODE) {
         // write a few blocks at a time to avoid exceeding
         // the maximum log transaction size, including
         // i-node, indirect block, allocation blocks,

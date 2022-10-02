@@ -2,18 +2,18 @@
 // Input is from the keyboard or serial port.
 // Output is written to the screen and serial port.
 
-#include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "traps.h"
-#include "spinlock.h"
-#include "sleeplock.h"
-#include "fs.h"
-#include "file.h"
-#include "memlayout.h"
-#include "mmu.h"
-#include "proc.h"
-#include "x86.h"
+#include "types.hpp"
+#include "defs.hpp"
+#include "param.hpp"
+#include "traps.hpp"
+#include "spinlock.hpp"
+#include "sleeplock.hpp"
+#include "fs.hpp"
+#include "file.hpp"
+#include "memlayout.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
+#include "x86.hpp"
 
 static void consputc(int);
 
@@ -53,10 +53,10 @@ static void printint(int xx, int base, int sign) {
 // PAGEBREAK: 50
 
 // Print to the console. only understands %d, %x, %p, %s.
-void cprintf(char* fmt, ...) {
-    int   i, c, locking;
-    uint* argp;
-    char* s;
+void cprintf(const char* fmt, ...) {
+    int         i, c, locking;
+    uint*       argp;
+    char const* s;
 
     locking = cons.locking;
     if (locking) {

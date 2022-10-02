@@ -1,17 +1,17 @@
 // Simple PIO-based (non-DMA) IDE driver code.
 
-#include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "memlayout.h"
-#include "mmu.h"
-#include "proc.h"
-#include "x86.h"
-#include "traps.h"
-#include "spinlock.h"
-#include "sleeplock.h"
-#include "fs.h"
-#include "buf.h"
+#include "types.hpp"
+#include "defs.hpp"
+#include "param.hpp"
+#include "memlayout.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
+#include "x86.hpp"
+#include "traps.hpp"
+#include "spinlock.hpp"
+#include "sleeplock.hpp"
+#include "fs.hpp"
+#include "buf.hpp"
 
 #define SECTOR_SIZE 512
 #define IDE_BSY 0x80

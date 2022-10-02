@@ -9,17 +9,17 @@
 // routines.  The (higher-level) system call implementations
 // are in sysfile.c.
 
-#include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "stat.h"
-#include "mmu.h"
-#include "proc.h"
-#include "spinlock.h"
-#include "sleeplock.h"
-#include "fs.h"
-#include "buf.h"
-#include "file.h"
+#include "types.hpp"
+#include "defs.hpp"
+#include "param.hpp"
+#include "stat.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
+#include "spinlock.hpp"
+#include "sleeplock.hpp"
+#include "fs.hpp"
+#include "buf.hpp"
+#include "file.hpp"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 static void itrunc(struct inode*);
@@ -291,7 +291,7 @@ void ilock(struct inode* ip) {
     if (ip->valid == 0) {
         bp        = bread(ip->dev, IBLOCK(ip->inum, sb));
         dip       = (struct dinode*)bp->data + ip->inum % IPB;
-        ip->type  = dip->type;
+        ip->type  = (InodeType)dip->type;
         ip->major = dip->major;
         ip->minor = dip->minor;
         ip->nlink = dip->nlink;
@@ -330,7 +330,7 @@ void iput(struct inode* ip) {
         if (r == 1) {
             // inode has no links and no other references: truncate and free.
             itrunc(ip);
-            ip->type = 0;
+            ip->type = (InodeType)0;
             iupdate(ip);
             ip->valid = 0;
         }

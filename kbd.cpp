@@ -1,7 +1,7 @@
-#include "types.h"
-#include "x86.h"
-#include "defs.h"
-#include "kbd.h"
+#include "types.hpp"
+#include "x86.hpp"
+#include "defs.hpp"
+#include "kbd.hpp"
 
 int kbdgetc(void) {
     static uint   shift;

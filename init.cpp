@@ -1,11 +1,11 @@
 // init: The initial user-level program
 
-#include "types.h"
-#include "stat.h"
-#include "user.h"
-#include "fcntl.h"
+#include "types.hpp"
+#include "stat.hpp"
+#include "user.hpp"
+#include "fcntl.hpp"
 
-char* argv[] = {"sh", 0};
+char const* argv[] = {"sh", 0};
 
 int main(void) {
     int pid, wpid;
