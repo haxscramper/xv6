@@ -1,11 +1,11 @@
-#include "param.h"
-#include "types.h"
-#include "defs.h"
-#include "x86.h"
-#include "memlayout.h"
-#include "mmu.h"
-#include "proc.h"
-#include "elf.h"
+#include "param.hpp"
+#include "types.hpp"
+#include "defs.hpp"
+#include "x86.hpp"
+#include "memlayout.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
+#include "elf.hpp"
 
 extern char data[]; // defined by kernel.ld
 pde_t*      kpgdir; // for use in scheduler()
@@ -15,8 +15,8 @@ pde_t*      kpgdir; // for use in scheduler()
 void seginit(void) {
     struct cpu* c;
 
-    // Map "logical" addresses to virtual addresses using identity map.
-    // Cannot share a CODE descriptor for both kernel and user
+    // Map "logical" addresses to virtual addresses using identity
+    // map. Cannot share a CODE descriptor for both kernel and user
     // because it would have to have DPL_USR, but the CPU forbids
     // an interrupt from CPL=0 to DPL=3.
     c                 = &cpus[cpuid()];
@@ -53,7 +53,12 @@ static pte_t* walkpgdir(pde_t* pgdir, const void* va, int alloc) {
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned.
-static int mappages(pde_t* pgdir, void* va, uint size, uint pa, int perm) {
+static int mappages(
+    pde_t* pgdir,
+    void*  va,
+    uint   size,
+    uint   pa,
+    int    perm) {
     char * a, *last;
     pte_t* pte;
 
@@ -90,8 +95,8 @@ static int mappages(pde_t* pgdir, void* va, uint size, uint pa, int perm) {
 //                                  rw data + free physical memory
 //   0xfe000000..0: mapped direct (devices such as ioapic)
 //
-// The kernel allocates physical memory for its heap and for user memory
-// between V2P(end) and the end of physical memory (PHYSTOP)
+// The kernel allocates physical memory for its heap and for user
+// memory between V2P(end) and the end of physical memory (PHYSTOP)
 // (directly addressable from end..P2V(PHYSTOP)).
 
 // This table defines the kernel's mappings, which are present in
@@ -104,9 +109,10 @@ static struct kmap
     int   perm;
 } kmap[] = {
     {(void*)KERNBASE, 0, EXTMEM, PTE_W},            // I/O space
-    {(void*)KERNLINK, V2P(KERNLINK), V2P(data), 0}, // kern text+rodata
-    {(void*)data, V2P(data), PHYSTOP, PTE_W},       // kern data+memory
-    {(void*)DEVSPACE, DEVSPACE, 0, PTE_W},          // more devices
+    {(void*)KERNLINK, V2P(KERNLINK), V2P(data), 0}, // kern
+                                                    // text+rodata
+    {(void*)data, V2P(data), PHYSTOP, PTE_W}, // kern data+memory
+    {(void*)DEVSPACE, DEVSPACE, 0, PTE_W},    // more devices
 };
 
 // Set up kernel part of a page table.
@@ -120,7 +126,13 @@ pde_t* setupkvm(void) {
     if (P2V(PHYSTOP) > (void*)DEVSPACE)
         panic("PHYSTOP too high");
     for (k = kmap; k < &kmap[NELEM(kmap)]; k++)
-        if (mappages(pgdir, k->virt, k->phys_end - k->phys_start, (uint)k->phys_start, k->perm) < 0) {
+        if (mappages(
+                pgdir,
+                k->virt,
+                k->phys_end - k->phys_start,
+                (uint)k->phys_start,
+                k->perm)
+            < 0) {
             freevm(pgdir);
             return 0;
         }
@@ -150,12 +162,14 @@ void switchuvm(struct proc* p) {
         panic("switchuvm: no pgdir");
 
     pushcli();
-    mycpu()->gdt[SEG_TSS]   = SEG16(STS_T32A, &mycpu()->ts, sizeof(mycpu()->ts) - 1, 0);
+    mycpu()->gdt[SEG_TSS] = SEG16(
+        STS_T32A, &mycpu()->ts, sizeof(mycpu()->ts) - 1, 0);
     mycpu()->gdt[SEG_TSS].s = 0;
     mycpu()->ts.ss0         = SEG_KDATA << 3;
     mycpu()->ts.esp0        = (uint)p->kstack + KSTACKSIZE;
-    // setting IOPL=0 in eflags *and* iomb beyond the tss segment limit
-    // forbids I/O instructions (e.g., inb and outb) from user space
+    // setting IOPL=0 in eflags *and* iomb beyond the tss segment
+    // limit forbids I/O instructions (e.g., inb and outb) from user
+    // space
     mycpu()->ts.iomb = (ushort)0xFFFF;
     ltr(SEG_TSS << 3);
     lcr3(V2P(p->pgdir)); // switch to process's address space
@@ -177,7 +191,12 @@ void inituvm(pde_t* pgdir, char* init, uint sz) {
 
 // Load a program segment into pgdir.  addr must be page-aligned
 // and the pages from addr to addr+sz must already be mapped.
-int loaduvm(pde_t* pgdir, char* addr, struct inode* ip, uint offset, uint sz) {
+int loaduvm(
+    pde_t*        pgdir,
+    char*         addr,
+    struct inode* ip,
+    uint          offset,
+    uint          sz) {
     uint   i, pa, n;
     pte_t* pte;
 
@@ -197,8 +216,9 @@ int loaduvm(pde_t* pgdir, char* addr, struct inode* ip, uint offset, uint sz) {
     return 0;
 }
 
-// Allocate page tables and physical memory to grow process from oldsz to
-// newsz, which need not be page aligned.  Returns new size or 0 on error.
+// Allocate page tables and physical memory to grow process from oldsz
+// to newsz, which need not be page aligned.  Returns new size or 0 on
+// error.
 int allocuvm(pde_t* pgdir, uint oldsz, uint newsz) {
     char* mem;
     uint  a;
@@ -217,7 +237,8 @@ int allocuvm(pde_t* pgdir, uint oldsz, uint newsz) {
             return 0;
         }
         memset(mem, 0, PGSIZE);
-        if (mappages(pgdir, (char*)a, PGSIZE, V2P(mem), PTE_W | PTE_U) < 0) {
+        if (mappages(pgdir, (char*)a, PGSIZE, V2P(mem), PTE_W | PTE_U)
+            < 0) {
             cprintf("allocuvm out of memory (2)\n");
             deallocuvm(pgdir, newsz, oldsz);
             kfree(mem);

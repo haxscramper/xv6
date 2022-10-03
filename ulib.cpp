@@ -1,8 +1,8 @@
-#include "types.h"
-#include "stat.h"
-#include "fcntl.h"
-#include "user.h"
-#include "x86.h"
+#include "types.hpp"
+#include "stat.hpp"
+#include "fcntl.hpp"
+#include "user.hpp"
+#include "x86.hpp"
 
 char* strcpy(char* s, const char* t) {
     char* os;
@@ -86,11 +86,8 @@ int atoi(const char* s) {
 }
 
 void* memmove(void* vdst, const void* vsrc, int n) {
-    char*       dst;
-    const char* src;
-
-    dst = vdst;
-    src = vsrc;
+    char*       dst = (char*)vdst;
+    char const* src = (char const*)vsrc;
     while (n-- > 0) {
         *dst++ = *src++;
     }

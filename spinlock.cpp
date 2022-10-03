@@ -1,13 +1,13 @@
 // Mutual exclusion spin locks.
 
-#include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "x86.h"
-#include "memlayout.h"
-#include "mmu.h"
-#include "proc.h"
-#include "spinlock.h"
+#include "types.hpp"
+#include "defs.hpp"
+#include "param.hpp"
+#include "x86.hpp"
+#include "memlayout.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
+#include "spinlock.hpp"
 
 void initlock(struct spinlock* lk, char* name) {
     lk->name   = name;
@@ -30,9 +30,9 @@ void acquire(struct spinlock* lk) {
         ;
     }
 
-    // Tell the C compiler and the processor to not move loads or stores
-    // past this point, to ensure that the critical section's memory
-    // references happen after the lock is acquired.
+    // Tell the C compiler and the processor to not move loads or
+    // stores past this point, to ensure that the critical section's
+    // memory references happen after the lock is acquired.
     __sync_synchronize();
 
     // Record info about lock acquisition for debugging.
@@ -49,11 +49,11 @@ void release(struct spinlock* lk) {
     lk->pcs[0] = 0;
     lk->cpu    = 0;
 
-    // Tell the C compiler and the processor to not move loads or stores
-    // past this point, to ensure that all the stores in the critical
-    // section are visible to other cores before the lock is released.
-    // Both the C compiler and the hardware may re-order loads and
-    // stores; __sync_synchronize() tells them both not to.
+    // Tell the C compiler and the processor to not move loads or
+    // stores past this point, to ensure that all the stores in the
+    // critical section are visible to other cores before the lock is
+    // released. Both the C compiler and the hardware may re-order
+    // loads and stores; __sync_synchronize() tells them both not to.
     __sync_synchronize();
 
     // Release the lock, equivalent to lk->locked = 0.
@@ -71,7 +71,8 @@ void getcallerpcs(void* v, uint pcs[]) {
 
     ebp = (uint*)v - 2;
     for (i = 0; i < 10; i++) {
-        if (ebp == 0 || ebp < (uint*)KERNBASE || ebp == (uint*)0xffffffff) {
+        if (ebp == 0 || ebp < (uint*)KERNBASE
+            || ebp == (uint*)0xffffffff) {
             break;
         }
         pcs[i] = ebp[1];        // saved %eip

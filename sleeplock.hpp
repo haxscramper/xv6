@@ -5,6 +5,6 @@ struct sleeplock
     struct spinlock lk;     // spinlock protecting this sleep lock
 
     // For debugging:
-    char* name; // Name of lock.
-    int   pid;  // Process holding lock
+    char const* name; // Name of lock.
+    int         pid;  // Process holding lock
 };

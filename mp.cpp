@@ -2,14 +2,14 @@
 // Search memory for MP description structures.
 // http://developer.intel.com/design/pentium/datashts/24201606.pdf
 
-#include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "memlayout.h"
-#include "mp.h"
-#include "x86.h"
-#include "mmu.h"
-#include "proc.h"
+#include "types.hpp"
+#include "defs.hpp"
+#include "param.hpp"
+#include "memlayout.hpp"
+#include "mp.hpp"
+#include "x86.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
 
 struct cpu cpus[NCPU];
 int        ncpu;
@@ -29,21 +29,21 @@ static uchar sum(uchar* addr, int len) {
 static struct mp* mpsearch1(uint a, int len) {
     uchar *e, *p, *addr;
 
-    addr = P2V(a);
+    addr = (uchar*)P2V(a);
     e    = addr + len;
     for (p = addr; p < e; p += sizeof(struct mp)) {
-        if (memcmp(p, "_MP_", 4) == 0 && sum(p, sizeof(struct mp)) == 0) {
+        if (memcmp(p, "_MP_", 4) == 0
+            && sum(p, sizeof(struct mp)) == 0) {
             return (struct mp*)p;
         }
     }
     return 0;
 }
 
-// Search for the MP Floating Pointer Structure, which according to the
-// spec is in one of the following three locations:
-// 1) in the first KB of the EBDA;
-// 2) in the last KB of system base memory;
-// 3) in the BIOS ROM between 0xE0000 and 0xFFFFF.
+// Search for the MP Floating Pointer Structure, which according to
+// the spec is in one of the following three locations: 1) in the
+// first KB of the EBDA; 2) in the last KB of system base memory; 3)
+// in the BIOS ROM between 0xE0000 and 0xFFFFF.
 static struct mp* mpsearch(void) {
     uchar*     bda;
     uint       p;
@@ -102,12 +102,15 @@ void mpinit(void) {
     }
     ismp  = 1;
     lapic = (uint*)conf->lapicaddr;
-    for (p = (uchar*)(conf + 1), e = (uchar*)conf + conf->length; p < e;) {
+    for (p = (uchar*)(conf + 1), e = (uchar*)conf + conf->length;
+         p < e;) {
         switch (*p) {
             case MPPROC:
                 proc = (struct mpproc*)p;
                 if (ncpu < NCPU) {
-                    cpus[ncpu].apicid = proc->apicid; // apicid may differ from ncpu
+                    cpus[ncpu].apicid = proc->apicid; // apicid may
+                                                      // differ from
+                                                      // ncpu
                     ncpu++;
                 }
                 p += sizeof(struct mpproc);

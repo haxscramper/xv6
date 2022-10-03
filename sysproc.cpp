@@ -1,11 +1,11 @@
-#include "types.h"
-#include "x86.h"
-#include "defs.h"
-#include "date.h"
-#include "param.h"
-#include "memlayout.h"
-#include "mmu.h"
-#include "proc.h"
+#include "types.hpp"
+#include "x86.hpp"
+#include "defs.hpp"
+#include "date.hpp"
+#include "param.hpp"
+#include "memlayout.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
 
 int sys_fork(void) { return fork(); }
 

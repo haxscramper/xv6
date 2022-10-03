@@ -1,13 +1,13 @@
 version: 3
 
 vars:
-  CC: gcc
+  CC: clang++
   AS: gas
   LD: ld
+  # NOTE clang allows C99 designated initializers
   CFLAGS:
     -std=c++20
     -fno-pie
-    -no-pie 
     -fno-pic
     -static
     -fno-builtin
@@ -21,6 +21,7 @@ vars:
     -fno-omit-frame-pointer
     -Wno-array-bounds
     -Wno-sign-compare
+    -Wno-c99-designator
     -fno-stack-protector # TODO stack protector flag is not always present
                          # in some compilers, original makefile checks for
                          # it's presence

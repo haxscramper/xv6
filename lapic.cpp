@@ -125,7 +125,8 @@ void lapicstartap(uchar apicid, uint addr) {
 
     // "The BSP must initialize CMOS shutdown code to 0AH
     // and the warm reset vector (DWORD based at 40:67) to point at
-    // the AP startup code prior to the [universal startup algorithm]."
+    // the AP startup code prior to the [universal startup
+    // algorithm]."
     outb(CMOS_PORT, 0xF); // offset 0xF is shutdown code
     outb(CMOS_PORT + 1, 0x0A);
     wrv    = (ushort*)P2V((0x40 << 4 | 0x67)); // Warm reset vector
@@ -143,8 +144,9 @@ void lapicstartap(uchar apicid, uint addr) {
     // Send startup IPI (twice!) to enter code.
     // Regular hardware is supposed to only accept a STARTUP
     // when it is in the halted state due to an INIT.  So the second
-    // should be ignored, but it is part of the official Intel algorithm.
-    // Bochs complains about the second one.  Too bad for Bochs.
+    // should be ignored, but it is part of the official Intel
+    // algorithm. Bochs complains about the second one.  Too bad for
+    // Bochs.
     for (i = 0; i < 2; i++) {
         lapicw(ICRHI, apicid << 24);
         lapicw(ICRLO, STARTUP | (addr >> 12));

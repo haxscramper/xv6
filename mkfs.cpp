@@ -6,24 +6,25 @@
 #include <assert.h>
 
 #define stat xv6_stat // avoid clash with host struct stat
-#include "types.h"
-#include "fs.h"
-#include "stat.h"
-#include "param.h"
+#include "types.hpp"
+#include "fs.hpp"
+#include "stat.hpp"
+#include "param.hpp"
 
 #ifndef static_assert
-#    define static_assert(a, b)                                                                                                                                \
-        do {                                                                                                                                                   \
-            switch (0)                                                                                                                                         \
-            case 0:                                                                                                                                            \
-            case (a):;                                                                                                                                         \
+#    define static_assert(a, b)                                      \
+        do {                                                         \
+            switch (0)                                               \
+            case 0:                                                  \
+            case (a):;                                               \
         } while (0)
 #endif
 
 #define NINODES 200
 
 // Disk layout:
-// [ boot block | sb block | log | inode blocks | free bit map | data blocks ]
+// [ boot block | sb block | log | inode blocks | free bit map | data
+// blocks ]
 
 int nbitmap      = FSSIZE / (BSIZE * 8) + 1;
 int ninodeblocks = NINODES / IPB + 1;
@@ -101,7 +102,15 @@ int main(int argc, char* argv[]) {
     sb.inodestart = xint(2 + nlog);
     sb.bmapstart  = xint(2 + nlog + ninodeblocks);
 
-    printf("nmeta %d (boot, super, log blocks %u inode blocks %u, bitmap blocks %u) blocks %d total %d\n", nmeta, nlog, ninodeblocks, nbitmap, nblocks, FSSIZE);
+    printf(
+        "nmeta %d (boot, super, log blocks %u inode blocks %u, "
+        "bitmap blocks %u) blocks %d total %d\n",
+        nmeta,
+        nlog,
+        ninodeblocks,
+        nbitmap,
+        nblocks,
+        FSSIZE);
 
     freeblock = nmeta; // the first free block that we can allocate
 

@@ -16,8 +16,8 @@
 ///   [ data blocks   ]
 /// ]
 ///
-/// mkfs computes the super block and builds an initial file system. The
-/// super block describes the disk layout:
+/// mkfs computes the super block and builds an initial file system.
+/// The super block describes the disk layout:
 struct superblock
 {
     uint size;       /// Size of file system image (blocks)
@@ -36,11 +36,11 @@ struct superblock
 /// On-disk inode structure
 struct dinode
 {
-    short type;               /// File type
-    short major;              /// Major device number (T_DEV only)
-    short minor;              /// Minor device number (T_DEV only)
-    short nlink;              /// Number of links to inode in file system
-    uint  size;               /// Size of file (bytes)
+    short type;  /// File type
+    short major; /// Major device number (T_DEV only)
+    short minor; /// Minor device number (T_DEV only)
+    short nlink; /// Number of links to inode in file system
+    uint  size;  /// Size of file (bytes)
     uint  addrs[NDIRECT + 1]; /// Data block addresses
 };
 

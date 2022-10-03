@@ -1,9 +1,9 @@
 // Boot loader.
 //
-// Part of the boot block, along with bootasm.S, which calls bootmain().
-// bootasm.S has put the processor into protected 32-bit mode.
-// bootmain() loads an ELF kernel image from the disk starting at
-// sector 1 and then jumps to the kernel entry routine.
+// Part of the boot block, along with bootasm.S, which calls
+// bootmain(). bootasm.S has put the processor into protected 32-bit
+// mode. bootmain() loads an ELF kernel image from the disk starting
+// at sector 1 and then jumps to the kernel entry routine.
 
 #include "types.hpp"
 #include "elf.hpp"
@@ -15,12 +15,12 @@
 void readseg(uchar*, uint, uint);
 
 extern "C" void bootmain(void) {
-    struct elfhdr*  elf;
-    struct proghdr *ph, *eph;
+    elfhdr*  elf;
+    proghdr *ph, *eph;
     void (*entry)(void);
     uchar* pa;
 
-    elf = (struct elfhdr*)0x10000; // scratch space
+    elf = (elfhdr*)0x10000; // scratch space
 
     // Read 1st page off disk
     readseg((uchar*)elf, 4096, 0);
@@ -31,7 +31,7 @@ extern "C" void bootmain(void) {
     }
 
     // Load each program segment (ignores ph flags).
-    ph  = (struct proghdr*)((uchar*)elf + elf->phoff);
+    ph  = (proghdr*)((uchar*)elf + elf->phoff);
     eph = ph + elf->phnum;
     for (; ph < eph; ph++) {
         pa = (uchar*)ph->paddr;
@@ -70,8 +70,8 @@ void readsect(void* dst, uint offset) {
     insl(0x1F0, dst, SECTSIZE / 4);
 }
 
-// Read 'count' bytes at 'offset' from kernel into physical address 'pa'.
-// Might copy more than asked.
+// Read 'count' bytes at 'offset' from kernel into physical address
+// 'pa'. Might copy more than asked.
 void readseg(uchar* pa, uint count, uint offset) {
     uchar* epa;
 

@@ -4,17 +4,17 @@
 // user code, and calls into file.c and fs.c.
 //
 
-#include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "stat.h"
-#include "mmu.h"
-#include "proc.h"
-#include "fs.h"
-#include "spinlock.h"
-#include "sleeplock.h"
-#include "file.h"
-#include "fcntl.h"
+#include "types.hpp"
+#include "defs.hpp"
+#include "param.hpp"
+#include "stat.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
+#include "fs.hpp"
+#include "spinlock.hpp"
+#include "sleeplock.hpp"
+#include "file.hpp"
+#include "fcntl.hpp"
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -71,7 +71,8 @@ int sys_read(void) {
     int          n;
     char*        p;
 
-    if (argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0) {
+    if (argfd(0, 0, &f) < 0 || argint(2, &n) < 0
+        || argptr(1, &p, n) < 0) {
         return -1;
     }
     return fileread(f, p, n);
@@ -82,7 +83,8 @@ int sys_write(void) {
     int          n;
     char*        p;
 
-    if (argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0) {
+    if (argfd(0, 0, &f) < 0 || argint(2, &n) < 0
+        || argptr(1, &p, n) < 0) {
         return -1;
     }
     return filewrite(f, p, n);
@@ -104,7 +106,8 @@ int sys_fstat(void) {
     struct file* f;
     struct stat* st;
 
-    if (argfd(0, 0, &f) < 0 || argptr(1, (void*)&st, sizeof(*st)) < 0) {
+    if (argfd(0, 0, &f) < 0
+        || argptr(1, (char**)&st, sizeof(*st)) < 0) {
         return -1;
     }
     return filestat(f, st);
@@ -112,10 +115,10 @@ int sys_fstat(void) {
 
 // Create the path new as a link to the same inode as old.
 int sys_link(void) {
-    char          name[DIRSIZ], *new, *old;
+    char          name[DIRSIZ], *_new, *old;
     struct inode *dp, *ip;
 
-    if (argstr(0, &old) < 0 || argstr(1, &new) < 0) {
+    if (argstr(0, &old) < 0 || argstr(1, &_new) < 0) {
         return -1;
     }
 
@@ -136,7 +139,7 @@ int sys_link(void) {
     iupdate(ip);
     iunlock(ip);
 
-    if ((dp = nameiparent(new, name)) == 0) {
+    if ((dp = nameiparent(_new, name)) == 0) {
         goto bad;
     }
     ilock(dp);
@@ -237,7 +240,11 @@ bad:
     return -1;
 }
 
-static struct inode* create(char* path, short type, short major, short minor) {
+static struct inode* create(
+    char* path,
+    short type,
+    short major,
+    short minor) {
     struct inode *ip, *dp;
     char          name[DIRSIZ];
 
@@ -270,7 +277,8 @@ static struct inode* create(char* path, short type, short major, short minor) {
         dp->nlink++;     // for ".."
         iupdate(dp);
         // No ip->nlink++ for ".": avoid cyclic ref count.
-        if (dirlink(ip, ".", ip->inum) < 0 || dirlink(ip, "..", dp->inum) < 0) {
+        if (dirlink(ip, ".", ip->inum) < 0
+            || dirlink(ip, "..", dp->inum) < 0) {
             panic("create dots");
         }
     }
@@ -326,7 +334,7 @@ int sys_open(void) {
     iunlock(ip);
     end_op();
 
-    f->type     = FD_INODE;
+    f->type     = file::FD_INODE;
     f->ip       = ip;
     f->off      = 0;
     f->readable = !(omode & O_WRONLY);
@@ -339,7 +347,8 @@ int sys_mkdir(void) {
     struct inode* ip;
 
     begin_op();
-    if (argstr(0, &path) < 0 || (ip = create(path, T_DIR, 0, 0)) == 0) {
+    if (argstr(0, &path) < 0
+        || (ip = create(path, T_DIR, 0, 0)) == 0) {
         end_op();
         return -1;
     }
@@ -354,7 +363,9 @@ int sys_mknod(void) {
     int           major, minor;
 
     begin_op();
-    if ((argstr(0, &path)) < 0 || argint(1, &major) < 0 || argint(2, &minor) < 0 || (ip = create(path, T_DEV, major, minor)) == 0) {
+    if ((argstr(0, &path)) < 0 || argint(1, &major) < 0
+        || argint(2, &minor) < 0
+        || (ip = create(path, T_DEV, major, minor)) == 0) {
         end_op();
         return -1;
     }
@@ -418,7 +429,7 @@ int sys_pipe(void) {
     struct file *rf, *wf;
     int          fd0, fd1;
 
-    if (argptr(0, (void*)&fd, 2 * sizeof(fd[0])) < 0) {
+    if (argptr(0, (char**)&fd, 2 * sizeof(fd[0])) < 0) {
         return -1;
     }
     if (pipealloc(&rf, &wf) < 0) {

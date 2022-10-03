@@ -1,12 +1,12 @@
-#include "types.h"
-#include "defs.h"
-#include "param.h"
-#include "mmu.h"
-#include "proc.h"
-#include "fs.h"
-#include "spinlock.h"
-#include "sleeplock.h"
-#include "file.h"
+#include "types.hpp"
+#include "defs.hpp"
+#include "param.hpp"
+#include "mmu.hpp"
+#include "proc.hpp"
+#include "fs.hpp"
+#include "spinlock.hpp"
+#include "sleeplock.hpp"
+#include "file.hpp"
 
 #define PIPESIZE 512
 
@@ -36,11 +36,11 @@ int pipealloc(struct file** f0, struct file** f1) {
     p->nwrite    = 0;
     p->nread     = 0;
     initlock(&p->lock, "pipe");
-    (*f0)->type     = FD_PIPE;
+    (*f0)->type     = file::FD_PIPE;
     (*f0)->readable = 1;
     (*f0)->writable = 0;
     (*f0)->pipe     = p;
-    (*f1)->type     = FD_PIPE;
+    (*f1)->type     = file::FD_PIPE;
     (*f1)->readable = 0;
     (*f1)->writable = 1;
     (*f1)->pipe     = p;
@@ -83,7 +83,8 @@ int pipewrite(struct pipe* p, char* addr, int n) {
 
     acquire(&p->lock);
     for (i = 0; i < n; i++) {
-        while (p->nwrite == p->nread + PIPESIZE) { // DOC: pipewrite-full
+        while (p->nwrite == p->nread + PIPESIZE) { // DOC:
+                                                   // pipewrite-full
             if (p->readopen == 0 || myproc()->killed) {
                 release(&p->lock);
                 return -1;

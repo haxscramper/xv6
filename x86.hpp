@@ -8,23 +8,39 @@ static inline uchar inb(ushort port) {
 }
 
 static inline void insl(int port, void* addr, int cnt) {
-    asm volatile("cld; rep insl" : "=D"(addr), "=c"(cnt) : "d"(port), "0"(addr), "1"(cnt) : "memory", "cc");
+    asm volatile("cld; rep insl"
+                 : "=D"(addr), "=c"(cnt)
+                 : "d"(port), "0"(addr), "1"(cnt)
+                 : "memory", "cc");
 }
 
-static inline void outb(ushort port, uchar data) { asm volatile("out %0,%1" : : "a"(data), "d"(port)); }
+static inline void outb(ushort port, uchar data) {
+    asm volatile("out %0,%1" : : "a"(data), "d"(port));
+}
 
-static inline void outw(ushort port, ushort data) { asm volatile("out %0,%1" : : "a"(data), "d"(port)); }
+static inline void outw(ushort port, ushort data) {
+    asm volatile("out %0,%1" : : "a"(data), "d"(port));
+}
 
 static inline void outsl(int port, const void* addr, int cnt) {
-    asm volatile("cld; rep outsl" : "=S"(addr), "=c"(cnt) : "d"(port), "0"(addr), "1"(cnt) : "cc");
+    asm volatile("cld; rep outsl"
+                 : "=S"(addr), "=c"(cnt)
+                 : "d"(port), "0"(addr), "1"(cnt)
+                 : "cc");
 }
 
 static inline void stosb(void* addr, int data, int cnt) {
-    asm volatile("cld; rep stosb" : "=D"(addr), "=c"(cnt) : "0"(addr), "1"(cnt), "a"(data) : "memory", "cc");
+    asm volatile("cld; rep stosb"
+                 : "=D"(addr), "=c"(cnt)
+                 : "0"(addr), "1"(cnt), "a"(data)
+                 : "memory", "cc");
 }
 
 static inline void stosl(void* addr, int data, int cnt) {
-    asm volatile("cld; rep stosl" : "=D"(addr), "=c"(cnt) : "0"(addr), "1"(cnt), "a"(data) : "memory", "cc");
+    asm volatile("cld; rep stosl"
+                 : "=D"(addr), "=c"(cnt)
+                 : "0"(addr), "1"(cnt), "a"(data)
+                 : "memory", "cc");
 }
 
 struct segdesc;
@@ -51,7 +67,9 @@ static inline void lidt(struct gatedesc* p, int size) {
     asm volatile("lidt (%0)" : : "r"(pd));
 }
 
-static inline void ltr(ushort sel) { asm volatile("ltr %0" : : "r"(sel)); }
+static inline void ltr(ushort sel) {
+    asm volatile("ltr %0" : : "r"(sel));
+}
 
 static inline uint readeflags(void) {
     uint eflags;
@@ -59,7 +77,9 @@ static inline uint readeflags(void) {
     return eflags;
 }
 
-static inline void loadgs(ushort v) { asm volatile("movw %0, %%gs" : : "r"(v)); }
+static inline void loadgs(ushort v) {
+    asm volatile("movw %0, %%gs" : : "r"(v));
+}
 
 static inline void cli(void) { asm volatile("cli"); }
 
@@ -69,7 +89,10 @@ static inline uint xchg(volatile uint* addr, uint newval) {
     uint result;
 
     // The + in "+m" denotes a read-modify-write operand.
-    asm volatile("lock; xchgl %0, %1" : "+m"(*addr), "=a"(result) : "1"(newval) : "cc");
+    asm volatile("lock; xchgl %0, %1"
+                 : "+m"(*addr), "=a"(result)
+                 : "1"(newval)
+                 : "cc");
     return result;
 }
 
@@ -79,7 +102,9 @@ static inline uint rcr2(void) {
     return val;
 }
 
-static inline void lcr3(uint val) { asm volatile("movl %0,%%cr3" : : "r"(val)); }
+static inline void lcr3(uint val) {
+    asm volatile("movl %0,%%cr3" : : "r"(val));
+}
 
 // PAGEBREAK: 36
 //  Layout of the trap frame built on the stack by the
@@ -114,7 +139,8 @@ struct trapframe
     ushort padding5;
     uint   eflags;
 
-    // below here only when crossing rings, such as from user to kernel
+    // below here only when crossing rings, such as from user to
+    // kernel
     uint   esp;
     ushort ss;
     ushort padding6;

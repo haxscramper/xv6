@@ -204,7 +204,9 @@ void consoleintr(int (*getc)(void)) {
                 doprocdump = 1;
                 break;
             case C('U'): // Kill line.
-                while (input.e != input.w && input.buf[(input.e - 1) % INPUT_BUF] != '\n') {
+                while (input.e != input.w
+                       && input.buf[(input.e - 1) % INPUT_BUF]
+                              != '\n') {
                     input.e--;
                     consputc(BACKSPACE);
                 }
@@ -218,10 +220,11 @@ void consoleintr(int (*getc)(void)) {
                 break;
             default:
                 if (c != 0 && input.e - input.r < INPUT_BUF) {
-                    c                                = (c == '\r') ? '\n' : c;
+                    c = (c == '\r') ? '\n' : c;
                     input.buf[input.e++ % INPUT_BUF] = c;
                     consputc(c);
-                    if (c == '\n' || c == C('D') || input.e == input.r + INPUT_BUF) {
+                    if (c == '\n' || c == C('D')
+                        || input.e == input.r + INPUT_BUF) {
                         input.w = input.e;
                         wakeup(&input.r);
                     }

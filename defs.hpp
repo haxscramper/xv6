@@ -36,8 +36,8 @@ int          filewrite(struct file*, char*, int n);
 
 // fs.cpp
 void          readsb(int dev, struct superblock* sb);
-int           dirlink(struct inode*, char*, uint);
-struct inode* dirlookup(struct inode*, char*, uint*);
+int           dirlink(struct inode*, char const*, uint);
+struct inode* dirlookup(struct inode*, char const*, uint*);
 struct inode* ialloc(uint, short);
 struct inode* idup(struct inode*);
 void          iinit(int dev);
@@ -47,7 +47,7 @@ void          iunlock(struct inode*);
 void          iunlockput(struct inode*);
 void          iupdate(struct inode*);
 int           namecmp(const char*, const char*);
-struct inode* namei(char*);
+struct inode* namei(char const*);
 struct inode* nameiparent(char*, char*);
 int           readi(struct inode*, char*, uint, uint);
 void          stati(struct inode*, struct stat*);

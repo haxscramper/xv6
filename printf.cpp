@@ -1,6 +1,6 @@
-#include "types.h"
-#include "stat.h"
-#include "user.h"
+#include "types.hpp"
+#include "stat.hpp"
+#include "user.hpp"
 
 static void putc(int fd, char c) { write(fd, &c, 1); }
 
@@ -33,9 +33,9 @@ static void printint(int fd, int xx, int base, int sgn) {
 
 // Print to the given fd. Only understands %d, %x, %p, %s.
 void printf(int fd, const char* fmt, ...) {
-    char* s;
-    int   c, i, state;
-    uint* ap;
+    char const* s;
+    int         c, i, state;
+    uint*       ap;
 
     state = 0;
     ap    = (uint*)(void*)&fmt + 1;

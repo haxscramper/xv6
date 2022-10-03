@@ -29,7 +29,8 @@
 //   ...
 // Log appends are synchronous.
 
-// Contents of the header block, used for both the on-disk header block
+// Contents of the header block, used for both the on-disk header
+// block
 // and to keep track in memory of logged block# before commit.
 struct logheader
 {
@@ -39,12 +40,12 @@ struct logheader
 
 struct log
 {
-    struct spinlock  lock;
-    int              start;
-    int              size;
-    int              outstanding; // how many FS sys calls are executing.
-    int              committing;  // in commit(), please wait.
-    int              dev;
+    struct spinlock lock;
+    int             start;
+    int             size;
+    int outstanding; // how many FS sys calls are executing.
+    int committing;  // in commit(), please wait.
+    int dev;
     struct logheader lh;
 };
 struct log log;
@@ -53,8 +54,9 @@ static void recover_from_log(void);
 static void commit();
 
 void initlog(int dev) {
-    if (sizeof(struct logheader) >= BSIZE)
+    if (sizeof(struct logheader) >= BSIZE) {
         panic("initlog: too big logheader");
+}
 
     struct superblock sb;
     initlock(&log.lock, "log");
@@ -70,10 +72,12 @@ static void install_trans(void) {
     int tail;
 
     for (tail = 0; tail < log.lh.n; tail++) {
-        struct buf* lbuf = bread(log.dev, log.start + tail + 1); // read log block
-        struct buf* dbuf = bread(log.dev, log.lh.block[tail]);   // read dst
-        memmove(dbuf->data, lbuf->data, BSIZE);                  // copy block to dst
-        bwrite(dbuf);                                            // write dst to disk
+        struct buf* lbuf = bread(
+            log.dev, log.start + tail + 1); // read log block
+        struct buf* dbuf = bread(log.dev, log.lh.block[tail]); // read
+                                                               // dst
+        memmove(dbuf->data, lbuf->data, BSIZE); // copy block to dst
+        bwrite(dbuf);                           // write dst to disk
         brelse(lbuf);
         brelse(dbuf);
     }
@@ -119,7 +123,9 @@ void begin_op(void) {
     while (1) {
         if (log.committing) {
             sleep(&log, &log.lock);
-        } else if (log.lh.n + (log.outstanding + 1) * MAXOPBLOCKS > LOGSIZE) {
+        } else if (
+            log.lh.n + (log.outstanding + 1) * MAXOPBLOCKS
+            > LOGSIZE) {
             // this op might exhaust log space; wait for commit.
             sleep(&log, &log.lock);
         } else {
@@ -137,8 +143,9 @@ void end_op(void) {
 
     acquire(&log.lock);
     log.outstanding -= 1;
-    if (log.committing)
+    if (log.committing) {
         panic("log.committing");
+}
     if (log.outstanding == 0) {
         do_commit      = 1;
         log.committing = 1;
@@ -166,8 +173,10 @@ static void write_log(void) {
     int tail;
 
     for (tail = 0; tail < log.lh.n; tail++) {
-        struct buf* to   = bread(log.dev, log.start + tail + 1); // log block
-        struct buf* from = bread(log.dev, log.lh.block[tail]);   // cache block
+        struct buf* to = bread(
+            log.dev, log.start + tail + 1); // log block
+        struct buf* from = bread(
+            log.dev, log.lh.block[tail]); // cache block
         memmove(to->data, from->data, BSIZE);
         bwrite(to); // write the log
         brelse(from);
@@ -197,19 +206,23 @@ static void commit() {
 void log_write(struct buf* b) {
     int i;
 
-    if (log.lh.n >= LOGSIZE || log.lh.n >= log.size - 1)
+    if (log.lh.n >= LOGSIZE || log.lh.n >= log.size - 1) {
         panic("too big a transaction");
-    if (log.outstanding < 1)
+}
+    if (log.outstanding < 1) {
         panic("log_write outside of trans");
+}
 
     acquire(&log.lock);
     for (i = 0; i < log.lh.n; i++) {
-        if (log.lh.block[i] == b->blockno) // log absorbtion
+        if (log.lh.block[i] == b->blockno) { // log absorbtion
             break;
+}
     }
     log.lh.block[i] = b->blockno;
-    if (i == log.lh.n)
+    if (i == log.lh.n) {
         log.lh.n++;
+}
     b->flags |= B_DIRTY; // prevent eviction
     release(&log.lock);
 }

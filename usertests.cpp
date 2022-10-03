@@ -1,17 +1,17 @@
-#include "param.h"
-#include "types.h"
-#include "stat.h"
-#include "user.h"
-#include "fs.h"
-#include "fcntl.h"
-#include "syscall.h"
-#include "traps.h"
-#include "memlayout.h"
+#include "param.hpp"
+#include "types.hpp"
+#include "stat.hpp"
+#include "user.hpp"
+#include "fs.hpp"
+#include "fcntl.hpp"
+#include "syscall.hpp"
+#include "traps.hpp"
+#include "memlayout.hpp"
 
-char  buf[8192];
-char  name[3];
-char* echoargv[] = {"echo", "ALL", "TESTS", "PASSED", 0};
-int   stdout     = 1;
+char        buf[8192];
+char        name[3];
+char const* echoargv[] = {"echo", "ALL", "TESTS", "PASSED", 0};
+int         stdout     = 1;
 
 // does chdir() call iput(p->cwd) in a transaction?
 void iputtest(void) {
@@ -215,7 +215,11 @@ void writetest1(void) {
             exit();
         }
         if (((int*)buf)[0] != n) {
-            printf(stdout, "read content of block %d is %d\n", n, ((int*)buf)[0]);
+            printf(
+                stdout,
+                "read content of block %d is %d\n",
+                n,
+                ((int*)buf)[0]);
             exit();
         }
         n++;
@@ -276,7 +280,7 @@ void dirtest(void) {
 
 void exectest(void) {
     printf(stdout, "exec test\n");
-    if (exec("echo", echoargv) < 0) {
+    if (exec("echo", const_cast<char const**>(&echoargv[0])) < 0) {
         printf(stdout, "exec echo failed\n");
         exit();
     }
@@ -417,7 +421,7 @@ void mem(void) {
     if ((pid = fork()) == 0) {
         m1 = 0;
         while ((m2 = malloc(10001)) != 0) {
-            *(char**)m2 = m1;
+            *(char**)m2 = (char*)m1;
             m1          = m2;
         }
         while (m1) {
@@ -498,9 +502,9 @@ void sharedfd(void) {
 // four processes write different files at the same
 // time, to test block allocation.
 void fourfiles(void) {
-    int   fd, pid, i, j, n, total, pi;
-    char* names[] = {"f0", "f1", "f2", "f3"};
-    char* fname;
+    int         fd, pid, i, j, n, total, pi;
+    char const* names[] = {"f0", "f1", "f2", "f3"};
+    char const* fname;
 
     printf(1, "fourfiles test\n");
 
@@ -612,7 +616,8 @@ void createdelete(void) {
             name[1] = '0' + i;
             fd      = open(name, 0);
             if ((i == 0 || i >= N / 2) && fd < 0) {
-                printf(1, "oops createdelete %s didn't exist\n", name);
+                printf(
+                    1, "oops createdelete %s didn't exist\n", name);
                 exit();
             } else if ((i >= 1 && i < N / 2) && fd >= 0) {
                 printf(1, "oops createdelete %s did exist\n", name);
@@ -800,7 +805,8 @@ void concreate(void) {
     close(fd);
 
     if (n != 40) {
-        printf(1, "concreate not enough files in directory listing\n");
+        printf(
+            1, "concreate not enough files in directory listing\n");
         exit();
     }
 
@@ -811,7 +817,8 @@ void concreate(void) {
             printf(1, "fork failed\n");
             exit();
         }
-        if (((i % 3) == 0 && pid == 0) || ((i % 3) == 1 && pid != 0)) {
+        if (((i % 3) == 0 && pid == 0)
+            || ((i % 3) == 1 && pid != 0)) {
             close(open(file, 0));
             close(open(file, 0));
             close(open(file, 0));
@@ -1186,15 +1193,22 @@ void fourteen(void) {
         printf(1, "mkdir 12345678901234/123456789012345 failed\n");
         exit();
     }
-    fd = open("123456789012345/123456789012345/123456789012345", O_CREATE);
+    fd = open(
+        "123456789012345/123456789012345/123456789012345", O_CREATE);
     if (fd < 0) {
-        printf(1, "create 123456789012345/123456789012345/123456789012345 failed\n");
+        printf(
+            1,
+            "create 123456789012345/123456789012345/123456789012345 "
+            "failed\n");
         exit();
     }
     close(fd);
     fd = open("12345678901234/12345678901234/12345678901234", 0);
     if (fd < 0) {
-        printf(1, "open 12345678901234/12345678901234/12345678901234 failed\n");
+        printf(
+            1,
+            "open 12345678901234/12345678901234/12345678901234 "
+            "failed\n");
         exit();
     }
     close(fd);
@@ -1204,7 +1218,8 @@ void fourteen(void) {
         exit();
     }
     if (mkdir("123456789012345/12345678901234") == 0) {
-        printf(1, "mkdir 12345678901234/123456789012345 succeeded!\n");
+        printf(
+            1, "mkdir 12345678901234/123456789012345 succeeded!\n");
         exit();
     }
 
@@ -1340,8 +1355,9 @@ void iref(void) {
 }
 
 // test that fork fails gracefully
-// the forktest binary also does this, but it runs out of proc entries first.
-// inside the bigger usertests binary, we run out of memory first.
+// the forktest binary also does this, but it runs out of proc entries
+// first. inside the bigger usertests binary, we run out of memory
+// first.
 void forktest(void) {
     int n, pid;
 
@@ -1419,7 +1435,10 @@ void sbrktest(void) {
     amt = (BIG) - (uint)a;
     p   = sbrk(amt);
     if (p != a) {
-        printf(stdout, "sbrk test failed to grow big address space; enough phys mem?\n");
+        printf(
+            stdout,
+            "sbrk test failed to grow big address space; enough phys "
+            "mem?\n");
         exit();
     }
     lastaddr  = (char*)(BIG - 1);
@@ -1434,7 +1453,11 @@ void sbrktest(void) {
     }
     c = sbrk(0);
     if (c != a - 4096) {
-        printf(stdout, "sbrk deallocation produced wrong address, a %x c %x\n", a, c);
+        printf(
+            stdout,
+            "sbrk deallocation produced wrong address, a %x c %x\n",
+            a,
+            c);
         exit();
     }
 
@@ -1442,12 +1465,14 @@ void sbrktest(void) {
     a = sbrk(0);
     c = sbrk(4096);
     if (c != a || sbrk(0) != a + 4096) {
-        printf(stdout, "sbrk re-allocation failed, a %x c %x\n", a, c);
+        printf(
+            stdout, "sbrk re-allocation failed, a %x c %x\n", a, c);
         exit();
     }
     if (*lastaddr == 99) {
         // should be zero
-        printf(stdout, "sbrk de-allocation didn't really deallocate\n");
+        printf(
+            stdout, "sbrk de-allocation didn't really deallocate\n");
         exit();
     }
 
@@ -1459,7 +1484,8 @@ void sbrktest(void) {
     }
 
     // can we read the kernel's memory?
-    for (a = (char*)(KERNBASE); a < (char*)(KERNBASE + 2000000); a += 50000) {
+    for (a = (char*)(KERNBASE); a < (char*)(KERNBASE + 2000000);
+         a += 50000) {
         ppid = getpid();
         pid  = fork();
         if (pid < 0) {
@@ -1494,8 +1520,8 @@ void sbrktest(void) {
             read(fds[0], &scratch, 1);
         }
     }
-    // if those failed allocations freed up the pages they did allocate,
-    // we'll be able to allocate here
+    // if those failed allocations freed up the pages they did
+    // allocate, we'll be able to allocate here
     c = sbrk(4096);
     for (i = 0; i < sizeof(pids) / sizeof(pids[0]); i++) {
         if (pids[i] == -1) {
@@ -1536,7 +1562,8 @@ void validatetest(void) {
 
     for (p = 0; p <= (uint)hi; p += 4096) {
         if ((pid = fork()) == 0) {
-            // try to crash the kernel by passing in a badly placed integer
+            // try to crash the kernel by passing in a badly placed
+            // integer
             validateint((int*)p);
             exit();
         }
@@ -1579,12 +1606,15 @@ void bigargtest(void) {
     unlink("bigarg-ok");
     pid = fork();
     if (pid == 0) {
-        static char* args[MAXARG];
-        int          i;
+        static char const* args[MAXARG];
+        int                i;
         for (i = 0; i < MAXARG - 1; i++) {
             args[i]
-                = "bigargs test: failed\n                                                                                                                      "
-                  "                                                                                 ";
+                = "bigargs test: failed\n                            "
+                  "                                                  "
+                  "                                        "
+                  "                                                  "
+                  "                               ";
         }
         args[MAXARG - 1] = 0;
         printf(stdout, "bigarg test\n");

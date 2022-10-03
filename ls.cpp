@@ -3,9 +3,9 @@
 #include "user.hpp"
 #include "fs.hpp"
 
-char* fmtname(char* path) {
+char const* fmtname(char const* path) {
     static char buf[DIRSIZ + 1];
-    char*       p;
+    char const* p;
 
     // Find first character after last slash.
     for (p = path + strlen(path); p >= path && *p != '/'; p--) {
@@ -22,7 +22,7 @@ char* fmtname(char* path) {
     return buf;
 }
 
-void ls(char* path) {
+void ls(char const* path) {
     char          buf[512], *p;
     int           fd;
     struct dirent de;
@@ -40,6 +40,10 @@ void ls(char* path) {
     }
 
     switch (st.type) {
+        case T_DEV: {
+            break;
+        }
+
         case T_FILE: {
             printf(
                 1,

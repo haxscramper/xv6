@@ -2,7 +2,8 @@
 //   + Blocks: allocator for raw disk blocks.
 //   + Log: crash recovery for multi-step updates.
 //   + Files: inode allocator, reading, writing, metadata.
-//   + Directories: inode with special contents (list of other inodes!)
+//   + Directories: inode with special contents (list of other
+//   inodes!)
 //   + Names: paths like /usr/rtm/xv6/fs.c for convenient naming.
 //
 // This file contains the low-level file system manipulation
@@ -22,14 +23,14 @@
 #include "file.hpp"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
-static void itrunc(struct inode*);
+static void itrunc(inode*);
 // there should be one superblock per disk device, but we run with
 // only one device
-struct superblock sb;
+superblock sb;
 
 // Read the super block.
-void readsb(int dev, struct superblock* sb) {
-    struct buf* bp;
+void readsb(int dev, superblock* sb) {
+    buf* bp;
 
     bp = bread(dev, 1);
     memmove(sb, bp->data, sizeof(*sb));
@@ -38,7 +39,7 @@ void readsb(int dev, struct superblock* sb) {
 
 // Zero a block.
 static void bzero(int dev, int bno) {
-    struct buf* bp;
+    buf* bp;
 
     bp = bread(dev, bno);
     memset(bp->data, 0, BSIZE);
@@ -50,8 +51,8 @@ static void bzero(int dev, int bno) {
 
 // Allocate a zeroed disk block.
 static uint balloc(uint dev) {
-    int         b, bi, m;
-    struct buf* bp;
+    int  b, bi, m;
+    buf* bp;
 
     bp = 0;
     for (b = 0; b < sb.size; b += BPB) {
@@ -73,8 +74,8 @@ static uint balloc(uint dev) {
 
 // Free a disk block.
 static void bfree(int dev, uint b) {
-    struct buf* bp;
-    int         bi, m;
+    buf* bp;
+    int  bi, m;
 
     bp = bread(dev, BBLOCK(b, sb));
     bi = b % BPB;
@@ -158,8 +159,8 @@ static void bfree(int dev, uint b) {
 
 struct
 {
-    struct spinlock lock;
-    struct inode    inode[NINODE];
+    spinlock lock;
+    inode    inode[NINODE];
 } icache;
 
 void iinit(int dev) {
@@ -183,21 +184,20 @@ void iinit(int dev) {
         sb.bmapstart);
 }
 
-static struct inode* iget(uint dev, uint inum);
+static inode* iget(uint dev, uint inum);
 
 // PAGEBREAK!
 //  Allocate an inode on device dev.
 //  Mark it as allocated by  giving it type type.
 //  Returns an unlocked but allocated and referenced inode.
-struct inode* ialloc(uint dev, short type)
-{
-    int            inum;
-    struct buf*    bp;
-    struct dinode* dip;
+inode* ialloc(uint dev, short type) {
+    int     inum;
+    buf*    bp;
+    dinode* dip;
 
     for (inum = 1; inum < sb.ninodes; inum++) {
         bp  = bread(dev, IBLOCK(inum, sb));
-        dip = (struct dinode*)bp->data + inum % IPB;
+        dip = (dinode*)bp->data + inum % IPB;
         if (dip->type == 0) { // a free inode
             memset(dip, 0, sizeof(*dip));
             dip->type = type;
@@ -214,12 +214,12 @@ struct inode* ialloc(uint dev, short type)
 // Must be called after every change to an ip->xxx field
 // that lives on disk, since i-node cache is write-through.
 // Caller must hold ip->lock.
-void iupdate(struct inode* ip) {
-    struct buf*    bp;
-    struct dinode* dip;
+void iupdate(inode* ip) {
+    buf*    bp;
+    dinode* dip;
 
     bp         = bread(ip->dev, IBLOCK(ip->inum, sb));
-    dip        = (struct dinode*)bp->data + ip->inum % IPB;
+    dip        = (dinode*)bp->data + ip->inum % IPB;
     dip->type  = ip->type;
     dip->major = ip->major;
     dip->minor = ip->minor;
@@ -233,8 +233,8 @@ void iupdate(struct inode* ip) {
 // Find the inode with number inum on device dev
 // and return the in-memory copy. Does not lock
 // the inode and does not read it from disk.
-static struct inode* iget(uint dev, uint inum) {
-    struct inode *ip, *empty;
+static inode* iget(uint dev, uint inum) {
+    inode *ip, *empty;
 
     acquire(&icache.lock);
 
@@ -268,8 +268,7 @@ static struct inode* iget(uint dev, uint inum) {
 
 // Increment reference count for ip.
 // Returns ip to enable ip = idup(ip1) idiom.
-struct inode* idup(struct inode* ip)
-{
+inode* idup(inode* ip) {
     acquire(&icache.lock);
     ip->ref++;
     release(&icache.lock);
@@ -278,9 +277,9 @@ struct inode* idup(struct inode* ip)
 
 // Lock the given inode.
 // Reads the inode from disk if necessary.
-void ilock(struct inode* ip) {
-    struct buf*    bp;
-    struct dinode* dip;
+void ilock(inode* ip) {
+    buf*    bp;
+    dinode* dip;
 
     if (ip == 0 || ip->ref < 1) {
         panic("ilock");
@@ -290,7 +289,7 @@ void ilock(struct inode* ip) {
 
     if (ip->valid == 0) {
         bp        = bread(ip->dev, IBLOCK(ip->inum, sb));
-        dip       = (struct dinode*)bp->data + ip->inum % IPB;
+        dip       = (dinode*)bp->data + ip->inum % IPB;
         ip->type  = (InodeType)dip->type;
         ip->major = dip->major;
         ip->minor = dip->minor;
@@ -306,7 +305,7 @@ void ilock(struct inode* ip) {
 }
 
 // Unlock the given inode.
-void iunlock(struct inode* ip) {
+void iunlock(inode* ip) {
     if (ip == 0 || !holdingsleep(&ip->lock) || ip->ref < 1) {
         panic("iunlock");
     }
@@ -321,14 +320,15 @@ void iunlock(struct inode* ip) {
 // to it, free the inode (and its content) on disk.
 // All calls to iput() must be inside a transaction in
 // case it has to free the inode.
-void iput(struct inode* ip) {
+void iput(inode* ip) {
     acquiresleep(&ip->lock);
     if (ip->valid && ip->nlink == 0) {
         acquire(&icache.lock);
         int r = ip->ref;
         release(&icache.lock);
         if (r == 1) {
-            // inode has no links and no other references: truncate and free.
+            // inode has no links and no other references: truncate
+            // and free.
             itrunc(ip);
             ip->type = (InodeType)0;
             iupdate(ip);
@@ -343,7 +343,7 @@ void iput(struct inode* ip) {
 }
 
 // Common idiom: unlock, then put.
-void iunlockput(struct inode* ip) {
+void iunlockput(inode* ip) {
     iunlock(ip);
     iput(ip);
 }
@@ -358,9 +358,9 @@ void iunlockput(struct inode* ip) {
 
 // Return the disk block address of the nth block in inode ip.
 // If there is no such block, bmap allocates one.
-static uint bmap(struct inode* ip, uint bn) {
-    uint        addr, *a;
-    struct buf* bp;
+static uint bmap(inode* ip, uint bn) {
+    uint addr, *a;
+    buf* bp;
 
     if (bn < NDIRECT) {
         if ((addr = ip->addrs[bn]) == 0) {
@@ -393,10 +393,10 @@ static uint bmap(struct inode* ip, uint bn) {
 // to it (no directory entries referring to it)
 // and has no in-memory reference to it (is
 // not an open file or current directory).
-static void itrunc(struct inode* ip) {
-    int         i, j;
-    struct buf* bp;
-    uint*       a;
+static void itrunc(inode* ip) {
+    int   i, j;
+    buf*  bp;
+    uint* a;
 
     for (i = 0; i < NDIRECT; i++) {
         if (ip->addrs[i]) {
@@ -424,7 +424,7 @@ static void itrunc(struct inode* ip) {
 
 // Copy stat information from inode.
 // Caller must hold ip->lock.
-void stati(struct inode* ip, struct stat* st) {
+void stati(inode* ip, stat* st) {
     st->dev   = ip->dev;
     st->ino   = ip->inum;
     st->type  = ip->type;
@@ -435,12 +435,13 @@ void stati(struct inode* ip, struct stat* st) {
 // PAGEBREAK!
 //  Read data from inode.
 //  Caller must hold ip->lock.
-int readi(struct inode* ip, char* dst, uint off, uint n) {
-    uint        tot, m;
-    struct buf* bp;
+int readi(inode* ip, char* dst, uint off, uint n) {
+    uint tot, m;
+    buf* bp;
 
     if (ip->type == T_DEV) {
-        if (ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read) {
+        if (ip->major < 0 || ip->major >= NDEV
+            || !devsw[ip->major].read) {
             return -1;
         }
         return devsw[ip->major].read(ip, dst, n);
@@ -465,12 +466,13 @@ int readi(struct inode* ip, char* dst, uint off, uint n) {
 // PAGEBREAK!
 // Write data to inode.
 // Caller must hold ip->lock.
-int writei(struct inode* ip, char* src, uint off, uint n) {
-    uint        tot, m;
-    struct buf* bp;
+int writei(inode* ip, char* src, uint off, uint n) {
+    uint tot, m;
+    buf* bp;
 
     if (ip->type == T_DEV) {
-        if (ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].write) {
+        if (ip->major < 0 || ip->major >= NDEV
+            || !devsw[ip->major].write) {
             return -1;
         }
         return devsw[ip->major].write(ip, src, n);
@@ -501,14 +503,15 @@ int writei(struct inode* ip, char* src, uint off, uint n) {
 // PAGEBREAK!
 //  Directories
 
-int namecmp(const char* s, const char* t) { return strncmp(s, t, DIRSIZ); }
+int namecmp(const char* s, const char* t) {
+    return strncmp(s, t, DIRSIZ);
+}
 
 // Look for a directory entry in a directory.
 // If found, set *poff to byte offset of entry.
-struct inode* dirlookup(struct inode* dp, char* name, uint* poff)
-{
-    uint          off, inum;
-    struct dirent de;
+inode* dirlookup(inode* dp, char const* name, uint* poff) {
+    uint   off, inum;
+    dirent de;
 
     if (dp->type != T_DIR) {
         panic("dirlookup not DIR");
@@ -535,10 +538,10 @@ struct inode* dirlookup(struct inode* dp, char* name, uint* poff)
 }
 
 // Write a new directory entry (name, inum) into the directory dp.
-int dirlink(struct inode* dp, char* name, uint inum) {
-    int           off;
-    struct dirent de;
-    struct inode* ip;
+int dirlink(inode* dp, char const* name, uint inum) {
+    int    off;
+    dirent de;
+    inode* ip;
 
     // Check that name is not present.
     if ((ip = dirlookup(dp, name, 0)) != 0) {
@@ -571,8 +574,8 @@ int dirlink(struct inode* dp, char* name, uint inum) {
 // Copy the next path element from path into name.
 // Return a pointer to the element following the copied one.
 // The returned path has no leading slashes,
-// so the caller can check *path=='\0' to see if the name is the last one.
-// If no name to remove, return 0.
+// so the caller can check *path=='\0' to see if the name is the last
+// one. If no name to remove, return 0.
 //
 // Examples:
 //   skipelem("a/bb/c", name) = "bb/c", setting name = "a"
@@ -580,21 +583,18 @@ int dirlink(struct inode* dp, char* name, uint inum) {
 //   skipelem("a", name) = "", setting name = "a"
 //   skipelem("", name) = skipelem("////", name) = 0
 //
-static char* skipelem(char* path, char* name) {
-    char* s;
-    int   len;
-
+static char const* skipelem(char const* path, char* name) {
     while (*path == '/') {
         path++;
     }
     if (*path == 0) {
         return 0;
     }
-    s = path;
+    char const* s = path;
     while (*path != '/' && *path != 0) {
         path++;
     }
-    len = path - s;
+    int len = path - s;
     if (len >= DIRSIZ) {
         memmove(name, s, DIRSIZ);
     } else {
@@ -611,8 +611,8 @@ static char* skipelem(char* path, char* name) {
 // If parent != 0, return the inode for the parent and copy the final
 // path element into name, which must have room for DIRSIZ bytes.
 // Must be called inside a transaction since it calls iput().
-static struct inode* namex(char* path, int nameiparent, char* name) {
-    struct inode *ip, *next;
+static inode* namex(char const* path, int nameiparent, char* name) {
+    inode *ip, *next;
 
     if (*path == '/') {
         ip = iget(ROOTDEV, ROOTINO);
@@ -645,13 +645,11 @@ static struct inode* namex(char* path, int nameiparent, char* name) {
     return ip;
 }
 
-struct inode* namei(char* path)
-{
+inode* namei(char const* path) {
     char name[DIRSIZ];
     return namex(path, 0, name);
 }
 
-struct inode* nameiparent(char* path, char* name)
-{
+inode* nameiparent(char* path, char* name) {
     return namex(path, 1, name);
 }

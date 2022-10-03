@@ -77,8 +77,10 @@ static void idestart(struct buf* b) {
     }
     int sector_per_block = BSIZE / SECTOR_SIZE;
     int sector           = b->blockno * sector_per_block;
-    int read_cmd         = (sector_per_block == 1) ? IDE_CMD_READ : IDE_CMD_RDMUL;
-    int write_cmd        = (sector_per_block == 1) ? IDE_CMD_WRITE : IDE_CMD_WRMUL;
+    int read_cmd         = (sector_per_block == 1) ? IDE_CMD_READ
+                                                   : IDE_CMD_RDMUL;
+    int write_cmd        = (sector_per_block == 1) ? IDE_CMD_WRITE
+                                                   : IDE_CMD_WRMUL;
 
     if (sector_per_block > 7) {
         panic("idestart");
@@ -151,7 +153,8 @@ void iderw(struct buf* b) {
 
     // Append b to idequeue.
     b->qnext = 0;
-    for (pp = &idequeue; *pp; pp = &(*pp)->qnext) { // DOC:insert-queue
+    for (pp = &idequeue; *pp;
+         pp = &(*pp)->qnext) { // DOC:insert-queue
         ;
     }
     *pp = b;

@@ -41,7 +41,8 @@ int exec(char* path, char** argv) {
 
     // Load program into memory.
     sz = 0;
-    for (i = 0, off = elf.phoff; i < elf.phnum; i++, off += sizeof(ph)) {
+    for (i = 0, off = elf.phoff; i < elf.phnum;
+         i++, off += sizeof(ph)) {
         if (readi(ip, (char*)&ph, off, sizeof(ph)) != sizeof(ph)) {
             goto bad;
         }
@@ -60,7 +61,8 @@ int exec(char* path, char** argv) {
         if (ph.vaddr % PGSIZE != 0) {
             goto bad;
         }
-        if (loaduvm(pgdir, (char*)ph.vaddr, ip, ph.off, ph.filesz) < 0) {
+        if (loaduvm(pgdir, (char*)ph.vaddr, ip, ph.off, ph.filesz)
+            < 0) {
             goto bad;
         }
     }
@@ -83,7 +85,8 @@ int exec(char* path, char** argv) {
             goto bad;
         }
         sp = (sp - (strlen(argv[argc]) + 1)) & ~3;
-        if (copyout(pgdir, sp, argv[argc], strlen(argv[argc]) + 1) < 0) {
+        if (copyout(pgdir, sp, argv[argc], strlen(argv[argc]) + 1)
+            < 0) {
             goto bad;
         }
         ustack[3 + argc] = sp;
