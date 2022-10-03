@@ -1,10 +1,10 @@
-#include "types.h"
-#include "stat.h"
-#include "user.h"
+#include "types.hpp"
+#include "stat.hpp"
+#include "user.hpp"
 
 char buf[512];
 
-void wc(int fd, char* name) {
+void wc(int fd, char const* name) {
     int i, n;
     int l, w, c, inword;
 
