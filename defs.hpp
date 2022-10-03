@@ -122,13 +122,13 @@ void         wakeup(void*);
 void         yield(void);
 
 // swtch.S
-void swtch(struct context**, struct context*);
+extern "C" void swtch(struct context**, struct context*);
 
 // spinlock.cpp
 void acquire(struct spinlock*);
 void getcallerpcs(void*, uint*);
 int  holding(struct spinlock*);
-void initlock(struct spinlock*, const char*);
+void initlock(struct spinlock*, char const*);
 void release(struct spinlock*);
 void pushcli(void);
 void popcli(void);

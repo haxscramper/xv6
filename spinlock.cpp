@@ -9,7 +9,7 @@
 #include "proc.hpp"
 #include "spinlock.hpp"
 
-void initlock(struct spinlock* lk, char* name) {
+void initlock(struct spinlock* lk, char const* name) {
     lk->name   = name;
     lk->locked = 0;
     lk->cpu    = 0;

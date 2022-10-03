@@ -1,6 +1,36 @@
 version: 3
 
 vars:
+  OBJS:
+    bio.o
+    console.o
+    exec.o
+    file.o
+    fs.o
+    ide.o
+    ioapic.o
+    kalloc.o
+    kbd.o
+    lapic.o
+    log.o
+    main.o
+    mp.o
+    picirq.o
+    pipe.o
+    proc.o
+    sleeplock.o
+    spinlock.o
+    string.o
+    swtch.o
+    syscall.o
+    sysfile.o
+    sysproc.o
+    trapasm.o
+    trap.o
+    uart.o
+    vectors.o
+    vm.o
+
   CC: clang++
   AS: gas
   LD: ld
@@ -74,8 +104,6 @@ tasks:
         ./sign.pl bootblock
 
   entryother:
-    sources:
-      - entryother.S
     cmds:
       - >
         {{.CC}} {{.CFLAGS}} -fno-pic -nostdinc -I. -c entryother.S
@@ -92,8 +120,6 @@ tasks:
         {{.OBJDUMP}} -S bootblockother.o > entryother.asm
 
   initcode:
-    sources:
-      - initcode.S
     cmds:
       - >
         {{.CC}} {{.CFLAGS}} -nostdinc -I. -c initcode.S
@@ -108,12 +134,16 @@ tasks:
     deps: [objs, entryother, initcode]
 
     # {{.OBJS}} entry.o entryother initcode kernel.ld
+
     cmds:
+      # Compile kerel binary using `entry.o`, all other objects etc. `-b`
+      # flag specifies binary format for the subsequent input files.
       - >
         {{.LD}}
         {{.LDFLAGS}}
         -T kernel.ld
-        -o kernel entry.o {{.OBJS}}
+        -o kernel
+        entry.o {{.OBJS}}
         -b binary initcode entryother
 
       - >
@@ -123,6 +153,7 @@ tasks:
         sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
 
   objs:
+    deps: [vectors]
     desc: "Build object files"
     cmds:
       - >
@@ -130,6 +161,13 @@ tasks:
           {{.CC}} {{.CFLAGS}} -c $file
         done
 
+        for file in *.S; do
+          {{.CC}} {{.CFLAGS}} -c $file
+        done
+
+  vectors:
+    cmds:
+      - ./vectors.pl > vectors.S
 
   clean:
     cmds:

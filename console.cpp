@@ -103,7 +103,7 @@ void cprintf(const char* fmt, ...) {
     }
 }
 
-void panic(char* s) {
+void panic(char const* s) {
     int  i;
     uint pcs[10];
 

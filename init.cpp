@@ -7,7 +7,7 @@
 
 char const* argv[] = {"sh", 0};
 
-int main(void) {
+extern "C" int main(void) {
     int pid, wpid;
 
     if (open("console", O_RDWR) < 0) {
