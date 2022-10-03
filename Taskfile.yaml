@@ -35,70 +35,40 @@ vars:
   AS: gas
   LD: ld
   # NOTE clang allows C99 designated initializers
-  CFLAGS:
-    -std=c++20
-    -fno-pie
-    -fno-pic
-    -static
-    -fno-builtin
-    -fno-strict-aliasing
-    -Oz
-    -Wall
-    -MD
-    -ggdb
-    -m32
-    -Werror
-    -fno-omit-frame-pointer
-    -Wno-array-bounds
-    -Wno-sign-compare
-    -Wno-c99-designator
-    -fno-stack-protector # TODO stack protector flag is not always present
-                         # in some compilers, original makefile checks for
-                         # it's presence
+
+  # TODO stack protector flag is not always present
+  # in some compilers, original makefile checks for
+  # it's presence
+  CFLAGS: "@{{.PWD}}/cflags.txt"
 
   ASFLAGS: -m32 -gdwarf-2 -Wa,-divide
-  LDFLAGS: -m elf_i386
+  LDFLAGS: "@{{.PWD}}/ldflags.txt"
     # $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
   OBJCOPY: objcopy
   OBJDUMP: objdump
-  QEMU: qemu
+  QEMU: qemu-system-i386
   QEMUOPTS:
     -drive file=fs.img,index=1,media=disk,format=raw
     -drive file=xv6.img,index=0,media=disk,format=raw
     -smp 2 -m 512 {{.QEMUEXTRA}}
 
-  UPROGS:
-    _cat
-    _echo
-    _forktest
-    _grep
-    _init
-    _kill
-    _ln
-    _ls
-    _mkdir
-    _rm
-    _sh
-    _stressfs
-    _usertests
-    _wc
-    _zombie
-
 tasks:
   uprogs:
+    dir: uprogs/build
     cmds:
-      - >
-        for file in uprogs/*.cpp; do
-          echo $file
-          # {{.LD}} {{.LDFLAGS}} -N -e main -Ttext 0 -o
-        done
+      - cmake -GNinja ..
+      - ninja -t graph | dot -o graph.png
+      - ninja
 
   
   qemu-nox:
     deps: [xv6.img, fs.img]
     cmds:
       - >
-        {{.QEMU}} -noraph {{.QEMUOPTS}}
+        {{.QEMU}} -nographic {{.QEMUOPTS}}
+
+  images:
+    deps: [xv6.img, fs.img]
 
   mkfs:
     cmds:
@@ -109,7 +79,7 @@ tasks:
     desc: "Build filesystem drive image"
     deps: [mkfs, uprogs]
     cmds:
-      - ./mkfs fs.img README {{.UPROGS}}
+      - ./mkfs fs.img README {{.PWD}}/uprogs/exe/*
 
   xv6.img:
     desc: "Build Xv6 kernel image"
@@ -217,7 +187,7 @@ tasks:
   clean:
     cmds:
       - >
-        rm -f
+        rm -rf
         *.tex
         *.dvi
         *.idx
@@ -240,8 +210,9 @@ tasks:
         kernelmemfs
         xv6memfs.img
         mkfs
+        uprogs/build
+        uprogs/exe
         .gdbinit
-        {{.UPROGS}}
 
   tags:
     deps: [objs, _init]

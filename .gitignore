@@ -16,3 +16,5 @@ mkfs
 .gdbinit
 *.srctrl*
 *.tmp
+
+**/build

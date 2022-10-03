@@ -1,4 +1,7 @@
-// System call numbers
+// System call numbers - macros defined in this file are used in the
+// `syscall.cpp` (explicitly, when assigning system call
+// implementations) and in the `usys.S` (indirectly constructed by the
+// SYSCALL macro).
 #define SYS_fork 1
 #define SYS_exit 2
 #define SYS_wait 3

@@ -12,11 +12,11 @@
 #include "param.hpp"
 
 #ifndef static_assert
-#    define static_assert(a, b)                                      \
-        do {                                                         \
-            switch (0)                                               \
-            case 0:                                                  \
-            case (a):;                                               \
+#    define static_assert(a, b)                                           \
+        do {                                                              \
+            switch (0)                                                    \
+            case 0:                                                       \
+            case (a):;                                                    \
         } while (0)
 #endif
 
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
     static_assert(sizeof(int) == 4, "Integers must be 4 bytes!");
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: mkfs fs.img files...\n");
+        fprintf(stderr, "Usage: mkfs fs.img <files...>\n");
         exit(1);
     }
 
@@ -136,11 +136,24 @@ int main(int argc, char* argv[]) {
     iappend(rootino, &de, sizeof(de));
 
     for (i = 2; i < argc; i++) {
-        assert(index(argv[i], '/') == 0);
-
         if ((fd = open(argv[i], 0)) < 0) {
             perror(argv[i]);
             exit(1);
+        }
+
+        // Search for the true file name - `mkfs` can accept absolute
+        // paths, but target image needs to put them in the root of the
+        // file system.
+        auto  max = strlen(argv[i]);
+        char* tmp = argv[i];
+        while (0 <= max && tmp[max] != '/') {
+            --max;
+        }
+
+        if (0 < max) {
+            tmp = argv[i] + max + 1;
+            printf("[MKFS] shortening %s to %s\n", argv[i], tmp);
+            argv[i] = tmp;
         }
 
         // Skip leading _ in name when writing to file system.
@@ -150,6 +163,7 @@ int main(int argc, char* argv[]) {
         if (argv[i][0] == '_') {
             ++argv[i];
         }
+
 
         inum = ialloc(T_FILE);
 

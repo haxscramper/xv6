@@ -1,7 +1,9 @@
 struct stat;
 struct rtcdate;
 
-// system calls
+// system calls - function implementations are provided in the usys.S
+// file, this header only defines C-compatible interfaces to them.
+extern "C" {
 int   fork(void);
 int   exit(void) __attribute__((noreturn));
 int   wait(void);
@@ -23,6 +25,7 @@ int   getpid(void);
 char* sbrk(int);
 int   sleep(int);
 int   uptime(void);
+}
 
 // ulib.c
 int   stat(const char*, struct stat*);
