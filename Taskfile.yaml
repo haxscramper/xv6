@@ -42,7 +42,7 @@ vars:
     -static
     -fno-builtin
     -fno-strict-aliasing
-    -O2
+    -Oz
     -Wall
     -MD
     -ggdb
@@ -61,10 +61,58 @@ vars:
     # $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
   OBJCOPY: objcopy
   OBJDUMP: objdump
+  QEMU: qemu
+  QEMUOPTS:
+    -drive file=fs.img,index=1,media=disk,format=raw
+    -drive file=xv6.img,index=0,media=disk,format=raw
+    -smp 2 -m 512 {{.QEMUEXTRA}}
+
+  UPROGS:
+    _cat
+    _echo
+    _forktest
+    _grep
+    _init
+    _kill
+    _ln
+    _ls
+    _mkdir
+    _rm
+    _sh
+    _stressfs
+    _usertests
+    _wc
+    _zombie
 
 tasks:
+  uprogs:
+    cmds:
+      - >
+        for file in uprogs/*.cpp; do
+          echo $file
+          # {{.LD}} {{.LDFLAGS}} -N -e main -Ttext 0 -o
+        done
+
+  
+  qemu-nox:
+    deps: [xv6.img, fs.img]
+    cmds:
+      - >
+        {{.QEMU}} -noraph {{.QEMUOPTS}}
+
+  mkfs:
+    cmds:
+      - >
+        {{.CC}} -o mkfs mkfs.cpp
+
+  fs.img:
+    desc: "Build filesystem drive image"
+    deps: [mkfs, uprogs]
+    cmds:
+      - ./mkfs fs.img README {{.UPROGS}}
+
   xv6.img:
-    desc: "Build final xv6 image"
+    desc: "Build Xv6 kernel image"
     deps: [bootblock, kernel]
     cmds:
       - dd if=/dev/zero of=xv6.img count=10000
@@ -80,9 +128,6 @@ tasks:
 
   bootblock:
     desc: "Build boot block"
-    sources:
-      - bootasm.S
-      - bootmain.cpp
     cmds:
       - >
         {{.CC}} {{.CFLAGS}} -fno-pic -O -nostdinc -I. -c bootmain.cpp

@@ -31,6 +31,7 @@ void tvinit(void) {
 
 void idtinit(void) { lidt(idt, sizeof(idt)); }
 
+
 // PAGEBREAK: 41
 extern "C" void trap(struct trapframe* tf) {
     if (tf->trapno == T_SYSCALL) {
