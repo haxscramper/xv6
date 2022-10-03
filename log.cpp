@@ -56,7 +56,7 @@ static void commit();
 void initlog(int dev) {
     if (sizeof(struct logheader) >= BSIZE) {
         panic("initlog: too big logheader");
-}
+    }
 
     struct superblock sb;
     initlock(&log.lock, "log");
@@ -145,7 +145,7 @@ void end_op(void) {
     log.outstanding -= 1;
     if (log.committing) {
         panic("log.committing");
-}
+    }
     if (log.outstanding == 0) {
         do_commit      = 1;
         log.committing = 1;
@@ -208,21 +208,21 @@ void log_write(struct buf* b) {
 
     if (log.lh.n >= LOGSIZE || log.lh.n >= log.size - 1) {
         panic("too big a transaction");
-}
+    }
     if (log.outstanding < 1) {
         panic("log_write outside of trans");
-}
+    }
 
     acquire(&log.lock);
     for (i = 0; i < log.lh.n; i++) {
         if (log.lh.block[i] == b->blockno) { // log absorbtion
             break;
-}
+        }
     }
     log.lh.block[i] = b->blockno;
     if (i == log.lh.n) {
         log.lh.n++;
-}
+    }
     b->flags |= B_DIRTY; // prevent eviction
     release(&log.lock);
 }
