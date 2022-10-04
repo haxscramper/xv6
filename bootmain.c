@@ -14,13 +14,13 @@
 
 void readseg(uchar*, uint, uint);
 
-extern "C" void bootmain(void) {
-    elfhdr*  elf;
-    proghdr *ph, *eph;
+void bootmain(void) {
+    struct elfhdr*  elf;
+    struct proghdr *ph, *eph;
     void (*entry)(void);
     uchar* pa;
 
-    elf = (elfhdr*)0x10000; // scratch space
+    elf = 0x10000; // scratch space
 
     // Read 1st page off disk
     readseg((uchar*)elf, 4096, 0);
@@ -31,7 +31,7 @@ extern "C" void bootmain(void) {
     }
 
     // Load each program segment (ignores ph flags).
-    ph  = (proghdr*)((uchar*)elf + elf->phoff);
+    ph  = ((uchar*)elf + elf->phoff);
     eph = ph + elf->phnum;
     for (; ph < eph; ph++) {
         pa = (uchar*)ph->paddr;

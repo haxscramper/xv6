@@ -52,7 +52,30 @@ vars:
     -drive file=xv6.img,index=0,media=disk,format=raw
     -smp 2 -m 512 {{.QEMUEXTRA}}
 
+  DOCKER_IMAGE: xv6_image
+  DOCKER_CONTAINER: xv6_container
+
 tasks:
+  image:
+    cmds:
+      - docker image rm {{.DOCKER_IMAGE}} || true
+      - docker image build -t {{.DOCKER_IMAGE}} .
+
+  container:
+    cmds:
+      - docker rm -f {{.DOCKER_CONTAINER}} || true
+      - >
+        docker
+        container
+        create
+        -it
+        -v {{.PWD}}:/mnt/xv6_repo
+        --name {{.DOCKER_CONTAINER}}
+        {{.DOCKER_IMAGE}}
+
+      - docker start --attach --interactive {{.DOCKER_CONTAINER}}
+
+
   uprogs:
     dir: uprogs/build
     cmds:
@@ -68,9 +91,11 @@ tasks:
         {{.QEMU}} -nographic {{.QEMUOPTS}}
 
   images:
+    desc: "Build all required images"
     deps: [xv6.img, fs.img]
 
   mkfs:
+    desc: "Compile filesystem constructor app"
     cmds:
       - >
         {{.CC}} -o mkfs mkfs.cpp
@@ -100,7 +125,7 @@ tasks:
     desc: "Build boot block"
     cmds:
       - >
-        {{.CC}} {{.CFLAGS}} -fno-pic -O -nostdinc -I. -c bootmain.cpp
+        clang {{.PWD}}/only_c_flags.txt -fno-pic -O -nostdinc -I. -c bootmain.c
       - >
         {{.CC}} {{.CFLAGS}} -fno-pic -nostdinc -I. -c bootasm.S
       - >
@@ -117,6 +142,49 @@ tasks:
         {{.OBJCOPY}} -S -O binary -j .text bootblock.o bootblock
       - >
         ./sign.pl bootblock
+
+  graph:
+    desc: "Create a task graph"
+    cmds:
+      - >
+        echo '
+          digraph G {
+            rankdir=LR;
+            node[shape=rect];
+            splines=polyline;
+        ' > graph.dot
+
+      - >
+        cat {{.PWD}}/Taskfile.yaml |
+        yq -o=json '
+          [
+            .tasks
+            | to_entries
+            | .[]
+            | select(.value.deps)
+            | del(.value.cmds)
+            | {"name": .key, "deps": .value.deps[]}
+          ]
+          ' > graph.json
+
+      - cat graph.json | jq -r '
+        [ .[].name ]
+        | unique
+        | .[]
+        | (. | sub("\\.|-" ; "_")) + "[label=\"" + . + "\"];"' >> graph.dot
+
+      - cat graph.json | jq -r '
+        .[] | (.name | sub("\\.|-" ; "_"))  +
+          " -> " + 
+          (.deps | sub("\\.|-" ; "_")) + ";"
+          ' >> graph.dot
+
+      - >
+        echo '
+          }
+        ' >> graph.dot
+
+      - dot -Tpng -o graph.png graph.dot
 
   entryother:
     cmds:
@@ -146,6 +214,7 @@ tasks:
         {{.OBJDUMP}} -S initcode.o > initcode.asm
 
   kernel:
+    desc: "Compile kernel binary"
     deps: [objs, entryother, initcode]
 
     # {{.OBJS}} entry.o entryother initcode kernel.ld
@@ -171,20 +240,25 @@ tasks:
     deps: [vectors]
     desc: "Build object files"
     cmds:
+      - echo {{.PWD}}/*.cpp
       - >
-        for file in *.cpp; do
+        for file in {{.PWD}}/*.cpp ; do
           {{.CC}} {{.CFLAGS}} -c $file
+          echo ">>" $file
         done
 
-        for file in *.S; do
+        for file in {{.PWD}}/*.S ; do
           {{.CC}} {{.CFLAGS}} -c $file
+          echo ">>" $file
         done
 
   vectors:
+    desc: "Vectors?"
     cmds:
       - ./vectors.pl > vectors.S
 
   clean:
+    desc: "Delete all artefacts"
     cmds:
       - >
         rm -rf
@@ -215,15 +289,11 @@ tasks:
         .gdbinit
 
   tags:
+    desc: "Create etags file"
     deps: [objs, _init]
-    sources:
-      - entryother.S
     cmds:
-      - etags *.S *.c
+      - etags *.S *.cpp *.c
 
   vector.S:
-    sources:
-      - vector.pl
-
     cmds:
       - ./vector.pl > vector.S
